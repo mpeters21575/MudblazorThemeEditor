@@ -28,7 +28,7 @@ Dark mode:
 - **Multi-Language Support** - English, Dutch, German, and Spanish UI translations
 - **Dark/Light Mode Toggle** - Switch between theme modes on the fly
 
-### 📥📤 **Import/Export Capabilities**
+### 📥 **Import/Export Capabilities**
 - **JSON Import/Export** - Standard format for theme sharing and storage
 - **C# Code Generation** - Export ready-to-use .NET theme classes for your projects
 - **File Upload Support** - Drag & drop .json and .cs theme files
