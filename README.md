@@ -7,7 +7,11 @@
 
 A comprehensive, real-time theme editor for MudBlazor applications built with Blazor WebAssembly and .NET 9. Create, customize, and export beautiful themes with live visual feedback across your entire application.
 
-![Theme Editor Preview](https://via.placeholder.com/800x400/2ECC71/FFFFFF?text=MudBlazor+Theme+Editor)
+Light mode:
+![Screenshot 2025-08-05 at 17.15.39.png](images/Screenshot%202025-08-05%20at%2017.15.39.png)
+
+Dark mode:
+![Screenshot 2025-08-05 at 17.16.25.png](images/Screenshot%202025-08-05%20at%2017.16.25.png)
 
 ## ✨ Features
 
@@ -263,7 +267,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🔗 Links
 
-- [🌐 Live Demo](https://your-demo-url.com)
 - [📚 MudBlazor Documentation](https://mudblazor.com/)
 - [🎨 Theme Gallery](https://your-theme-gallery.com)
 - [💬 Discussions](https://github.com/yourusername/mudblazor-theme-editor/discussions)
