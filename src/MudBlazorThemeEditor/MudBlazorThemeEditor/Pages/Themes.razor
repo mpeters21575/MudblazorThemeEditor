@@ -1,0 +1,279 @@
+@page "/themes"
+@using Fluxor
+@using MudBlazor
+@using MudBlazorThemeEditor.Components.Dialogs
+@using MudBlazorThemeEditor.Services
+@using MudBlazorThemeEditor.Store
+@inject IState<ThemeState> ThemeState
+@inject IDispatcher Dispatcher
+@inject IThemeService ThemeService
+@inject ILocalizationService Localization
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudGrid>
+    <MudItem xs="12">
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                <div>
+                    <MudText Typo="Typo.h4" Color="Color.Primary">
+                        <MudIcon Icon="@Icons.Material.Filled.Save" Class="mr-2" />
+                        @Localization.GetString("theme_management")
+                    </MudText>
+                    <MudText Typo="Typo.body2" Class="mt-2">
+                        @Localization.GetString("export_share_backup")
+                    </MudText>
+                </div>
+                
+                <MudStack Row="true" Spacing="2">
+                    <MudButton Variant="Variant.Filled" 
+                               Color="Color.Primary" 
+                               StartIcon="@Icons.Material.Filled.Add"
+                               OnClick="CreateNewTheme">
+                        @Localization.GetString("new_theme")
+                    </MudButton>
+                    
+                    <MudButton Variant="Variant.Outlined" 
+                               Color="Color.Primary" 
+                               StartIcon="@Icons.Material.Filled.ContentCopy"
+                               OnClick="CloneCurrentTheme">
+                        @Localization.GetString("clone_theme")
+                    </MudButton>
+                    
+                    <MudButton Variant="Variant.Outlined" 
+                               Color="Color.Warning" 
+                               StartIcon="@Icons.Material.Filled.Refresh"
+                               OnClick="ResetDefaultThemes">
+                        Reset Default Themes
+                    </MudButton>
+                </MudStack>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-4">
+                @Localization.GetString("current_theme"): @ThemeState.Value.CurrentThemeName
+            </MudText>
+            
+            <MudStack Row="true" Spacing="2" Class="mb-4">
+                <MudTextField @bind-Value="_saveThemeName"
+                              Label="@Localization.GetString("theme_name")"
+                              Variant="Variant.Outlined"
+                              Style="max-width: 300px;" />
+                
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Success"
+                           StartIcon="@Icons.Material.Filled.Save"
+                           OnClick="SaveCurrentTheme"
+                           Disabled="@string.IsNullOrWhiteSpace(_saveThemeName)">
+                    @Localization.GetString("save_theme")
+                </MudButton>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-4">
+                Saved Themes
+            </MudText>
+            
+            <MudGrid>
+                @foreach (var theme in ThemeState.Value.SavedThemes)
+                {
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCard Elevation="2" Style="height: 100%;">
+                            <MudCardContent>
+                                <MudStack Spacing="2">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                        <MudText Typo="Typo.h6">@theme.Key</MudText>
+                                        @if (theme.Key == ThemeState.Value.CurrentThemeName)
+                                        {
+                                            <MudChip T="string" Color="Color.Success" Size="Size.Small">Active</MudChip>
+                                        }
+                                    </MudStack>
+                                    
+                                    <MudStack Row="true" Spacing="1" Class="mb-2">
+                                        <MudIcon Icon="@Icons.Material.Filled.Circle" 
+                                                 Style="@($"color: {theme.Value.PaletteLight.Primary}; font-size: 16px;")" />
+                                        <MudIcon Icon="@Icons.Material.Filled.Circle" 
+                                                 Style="@($"color: {theme.Value.PaletteLight.Secondary}; font-size: 16px;")" />
+                                        <MudIcon Icon="@Icons.Material.Filled.Circle" 
+                                                 Style="@($"color: {theme.Value.PaletteLight.Success}; font-size: 16px;")" />
+                                        <MudIcon Icon="@Icons.Material.Filled.Circle" 
+                                                 Style="@($"color: {theme.Value.PaletteLight.Error}; font-size: 16px;")" />
+                                    </MudStack>
+                                </MudStack>
+                            </MudCardContent>
+                            
+                            <MudCardActions>
+                                <MudButton Size="Size.Small" 
+                                           Color="Color.Primary" 
+                                           OnClick="@(() => LoadTheme(theme.Key))"
+                                           Disabled="@(theme.Key == ThemeState.Value.CurrentThemeName)">
+                                    Load
+                                </MudButton>
+                                
+                                <MudButton Size="Size.Small" 
+                                           Color="Color.Secondary" 
+                                           OnClick="@(() => CloneTheme(theme.Key))">
+                                    Clone
+                                </MudButton>
+                                
+                                @if (!IsDefaultTheme(theme.Key))
+                                {
+                                    <MudButton Size="Size.Small" 
+                                               Color="Color.Error" 
+                                               OnClick="@(() => DeleteTheme(theme.Key))">
+                                        Delete
+                                    </MudButton>
+                                }
+                            </MudCardActions>
+                        </MudCard>
+                    </MudItem>
+                }
+            </MudGrid>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private string _saveThemeName = "";
+
+    private readonly HashSet<string> _defaultThemes = new() { "Default", "Dark Optimized", "High Contrast", "Gradient" };
+
+    private bool IsDefaultTheme(string themeName) => _defaultThemes.Contains(themeName);
+
+    private void LoadTheme(string themeName)
+    {
+        Console.WriteLine($"LoadTheme called with: {themeName}");
+        Console.WriteLine($"Current theme before dispatch: {ThemeState.Value.CurrentThemeName}");
+        
+        Dispatcher.Dispatch(new LoadThemeAction(themeName));
+        
+        Console.WriteLine($"LoadThemeAction dispatched for: {themeName}");
+        Snackbar.Add($"Loaded theme: {themeName}", Severity.Success);
+    }
+
+    private async Task SaveCurrentTheme()
+    {
+        if (string.IsNullOrWhiteSpace(_saveThemeName))
+            return;
+
+        var parameters = new DialogParameters
+        {
+            { "ThemeName", _saveThemeName },
+            { "ThemeExists", ThemeState.Value.SavedThemes.ContainsKey(_saveThemeName) }
+        };
+
+        var dialog = await DialogService.ShowAsync<SaveThemeDialog>("Save Theme", parameters);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            Dispatcher.Dispatch(new SaveThemeAction(_saveThemeName, ThemeState.Value.CurrentTheme));
+            Snackbar.Add($"Theme '{_saveThemeName}' saved successfully!", Severity.Success);
+            _saveThemeName = "";
+        }
+    }
+
+    private async Task CreateNewTheme()
+    {
+        var dialog = await DialogService.ShowAsync<NewThemeDialog>("Create New Theme");
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled && result.Data is string themeName)
+        {
+            var newTheme = ThemeService.CloneTheme(CashableTheme.Theme);
+            Dispatcher.Dispatch(new SaveThemeAction(themeName, newTheme));
+            Dispatcher.Dispatch(new LoadThemeAction(themeName));
+            Snackbar.Add($"New theme '{themeName}' created!", Severity.Success);
+        }
+    }
+
+    private async Task CloneCurrentTheme()
+    {
+        var dialog = await DialogService.ShowAsync<CloneThemeDialog>("Clone Current Theme");
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled && result.Data is string themeName)
+        {
+            var clonedTheme = ThemeService.CloneTheme(ThemeState.Value.CurrentTheme);
+            Dispatcher.Dispatch(new SaveThemeAction(themeName, clonedTheme));
+            Snackbar.Add($"Theme cloned as '{themeName}'!", Severity.Success);
+        }
+    }
+
+    private async Task CloneTheme(string sourceThemeName)
+    {
+        var dialog = await DialogService.ShowAsync<CloneThemeDialog>($"Clone '{sourceThemeName}'");
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled && result.Data is string newThemeName)
+        {
+            var sourceTheme = ThemeState.Value.SavedThemes[sourceThemeName];
+            var clonedTheme = ThemeService.CloneTheme(sourceTheme);
+            Dispatcher.Dispatch(new SaveThemeAction(newThemeName, clonedTheme));
+            Snackbar.Add($"Theme '{sourceThemeName}' cloned as '{newThemeName}'!", Severity.Success);
+        }
+    }
+
+    private async Task DeleteTheme(string themeName)
+    {
+        if (IsDefaultTheme(themeName))
+            return;
+
+        var parameters = new DialogParameters
+        {
+            { "ContentText", $"Are you sure you want to delete the theme '{themeName}'? This action cannot be undone." },
+            { "ButtonText", "Delete" },
+            { "Color", Color.Error }
+        };
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Delete Theme", parameters);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            Dispatcher.Dispatch(new DeleteThemeAction(themeName));
+            
+            // If we deleted the current theme, switch to default
+            if (themeName == ThemeState.Value.CurrentThemeName)
+            {
+                Dispatcher.Dispatch(new LoadThemeAction("Default"));
+            }
+            
+            Snackbar.Add($"Theme '{themeName}' deleted!", Severity.Info);
+        }
+    }
+
+    private async Task ResetDefaultThemes()
+    {
+        Console.WriteLine("ResetDefaultThemes button clicked");
+        
+        var parameters = new DialogParameters
+        {
+            { "ContentText", "This will reset all default themes (CashableTheme, Cool Minimal Theme, Ultra Minimal Theme, Warm Minimal Theme) to their original colors. Any customizations will be lost. Do you want to continue?" },
+            { "ButtonText", "Reset Themes" },
+            { "Color", Color.Warning }
+        };
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Reset Default Themes", parameters);
+        var result = await dialog.Result;
+
+        Console.WriteLine($"Dialog result: Canceled={result?.Canceled}");
+
+        if (result != null && !result.Canceled)
+        {
+            Console.WriteLine("Dispatching ResetDefaultThemesAction");
+            Dispatcher.Dispatch(new ResetDefaultThemesAction());
+            Snackbar.Add("Default themes have been reset to their original colors!", Severity.Success);
+        }
+        else
+        {
+            Console.WriteLine("Reset was canceled or dialog result was null");
+        }
+    }
+}

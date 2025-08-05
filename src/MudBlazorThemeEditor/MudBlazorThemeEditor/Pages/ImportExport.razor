@@ -1,0 +1,472 @@
+@page "/import-export"
+@inject IState<ThemeState> ThemeState
+@inject IDispatcher Dispatcher
+@inject IImportExportService ImportExportService
+@inject ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
+
+<MudGrid>
+    <MudItem xs="12">
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudText Typo="Typo.h4" Color="Color.Primary">
+                <MudIcon Icon="@Icons.Material.Filled.ImportExport" Class="mr-2" />
+                Import/Export Themes
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mt-2">
+                Export your themes to share or backup, and import themes from JSON or C# code.
+            </MudText>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-4">
+                <MudIcon Icon="@Icons.Material.Filled.FileDownload" Class="mr-2" />
+                Export Current Theme
+            </MudText>
+            
+            <MudStack Spacing="3">
+                <MudTextField @bind-Value="_exportThemeName"
+                              Label="Export Theme Name"
+                              Variant="Variant.Outlined"
+                              HelperText="Name for the exported theme" />
+                
+                <MudStack Row="true" Spacing="2">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Code"
+                               OnClick="ExportAsJson">
+                        Export as JSON
+                    </MudButton>
+                    
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.IntegrationInstructions"
+                               OnClick="ExportAsCSharp">
+                        Export as C#
+                    </MudButton>
+                </MudStack>
+                
+                @if (!string.IsNullOrEmpty(_exportedCode))
+                {
+                    <MudExpansionPanels Class="mt-4">
+                        <MudExpansionPanel Expanded="true">
+                            <TitleContent>
+                                <div style="display: flex; align-items: center;">
+                                    <MudIcon Icon="@Icons.Material.Filled.Code" class="mr-3" />
+                                    <MudText>Exported Code (@_exportFormat.ToUpper())</MudText>
+                                </div>
+                            </TitleContent>
+                            <ChildContent>
+                                <MudPaper Class="pa-3" Style="background-color: #f5f5f5; max-height: 400px; overflow-y: auto;">
+                                    <pre style="margin: 0; white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 12px;">@_exportedCode</pre>
+                                </MudPaper>
+                                <MudStack Row="true" Class="mt-2" Spacing="2">
+                                    <MudButton Size="Size.Small"
+                                               Variant="Variant.Text"
+                                               StartIcon="@Icons.Material.Filled.ContentCopy"
+                                               OnClick="CopyToClipboard">
+                                        Copy to Clipboard
+                                    </MudButton>
+                                    <MudButton Size="Size.Small"
+                                               Variant="Variant.Text"
+                                               StartIcon="@Icons.Material.Filled.Download"
+                                               OnClick="DownloadFile">
+                                        Download File
+                                    </MudButton>
+                                </MudStack>
+                            </ChildContent>
+                        </MudExpansionPanel>
+                    </MudExpansionPanels>
+                }
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-4">
+                <MudIcon Icon="@Icons.Material.Filled.FileUpload" Class="mr-2" />
+                Import Theme
+            </MudText>
+            
+            <MudStack Spacing="3">
+                <MudTextField @bind-Value="_importThemeName"
+                              Label="Import Theme Name"
+                              Variant="Variant.Outlined"
+                              HelperText="Name for the imported theme" />
+                
+                <MudTabs Elevation="0" Color="Color.Primary" SliderColor="Color.Primary">
+                    <MudTabPanel Text="JSON Import" Icon="@Icons.Material.Filled.Code">
+                        <MudStack Spacing="3" Class="pt-3">
+                            <MudFileUpload T="IBrowserFile"
+                                           Accept=".json"
+                                           OnFilesChanged="OnJsonFileChanged"
+                                           MaximumFileCount="1">
+                                <ActivatorContent>
+                                    <MudButton HtmlTag="label"
+                                               Variant="Variant.Filled"
+                                               Color="Color.Primary"
+                                               StartIcon="@Icons.Material.Filled.CloudUpload">
+                                        Select JSON File
+                                    </MudButton>
+                                </ActivatorContent>
+                            </MudFileUpload>
+                            
+                            <MudTextField @bind-Value="_importJson"
+                                          Label="Or paste JSON here"
+                                          Variant="Variant.Outlined"
+                                          Lines="6"
+                                          HelperText="Paste theme JSON directly" />
+                        </MudStack>
+                    </MudTabPanel>
+                    
+                    <MudTabPanel Text="C# Import" Icon="@Icons.Material.Filled.IntegrationInstructions">
+                        <MudStack Spacing="3" Class="pt-3">
+                            <MudFileUpload T="IBrowserFile"
+                                           Accept=".cs"
+                                           OnFilesChanged="OnCSharpFileChanged"
+                                           MaximumFileCount="1">
+                                <ActivatorContent>
+                                    <MudButton HtmlTag="label"
+                                               Variant="Variant.Outlined"
+                                               Color="Color.Secondary"
+                                               StartIcon="@Icons.Material.Filled.CloudUpload">
+                                        Select C# File
+                                    </MudButton>
+                                </ActivatorContent>
+                            </MudFileUpload>
+                            
+                            <MudTextField @bind-Value="_importCSharp"
+                                          Label="Or paste C# theme code here"
+                                          Variant="Variant.Outlined"
+                                          Lines="8"
+                                          HelperText="Paste C# theme class code directly" />
+                            
+                            <MudAlert Severity="Severity.Info" Dense="true">
+                                <strong>Tip:</strong> You can paste the entire C# class or just the theme initialization code.
+                                The parser will extract the theme properties automatically.
+                            </MudAlert>
+                        </MudStack>
+                    </MudTabPanel>
+                </MudTabs>
+                
+                @if (_selectedFile != null)
+                {
+                    <MudAlert Severity="Severity.Info">
+                        Selected: @_selectedFile.Name (@_selectedFile.Size bytes)
+                    </MudAlert>
+                }
+                
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Success"
+                           StartIcon="@Icons.Material.Filled.Upload"
+                           OnClick="ImportThemeAsync"
+                           Disabled="@(string.IsNullOrWhiteSpace(_importThemeName) || (string.IsNullOrWhiteSpace(_importJson) && string.IsNullOrWhiteSpace(_importCSharp) && _selectedFile == null))">
+                    Import Theme
+                </MudButton>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-4">
+                <MudIcon Icon="@Icons.Material.Filled.Palette" Class="mr-2" />
+                Bulk Operations
+            </MudText>
+            
+            <MudStack Row="true" Spacing="2">
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Secondary"
+                           StartIcon="@Icons.Material.Filled.Archive"
+                           OnClick="ExportAllThemes">
+                    Export All Themes (JSON)
+                </MudButton>
+                
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Warning"
+                           StartIcon="@Icons.Material.Filled.Restore"
+                           OnClick="ResetToDefaults">
+                    Reset to Default Themes
+                </MudButton>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private string _exportThemeName = "";
+    private string _importThemeName = "";
+    private string _importJson = "";
+    private string _importCSharp = "";
+    private string _exportedCode = "";
+    private string _exportFormat = "json";
+    private IBrowserFile? _selectedFile;
+
+    protected override void OnInitialized()
+    {
+        _exportThemeName = ThemeState.Value.CurrentThemeName;
+    }
+
+    private void ExportAsJson()
+    {
+        try
+        {
+            var result = ImportExportService.ExportThemeAsJson(ThemeState.Value.CurrentTheme);
+            if (result.IsSuccess)
+            {
+                _exportedCode = result.Value!;
+                _exportFormat = "json";
+                Snackbar.Add("Theme exported as JSON!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add($"Export failed: {result.ErrorMessage}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Export failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void ExportAsCSharp()
+    {
+        try
+        {
+            var themeName = string.IsNullOrWhiteSpace(_exportThemeName) ? "CustomTheme" : _exportThemeName.Replace(" ", "");
+            var result = ImportExportService.ExportThemeAsCSharp(ThemeState.Value.CurrentTheme, themeName);
+            if (result.IsSuccess)
+            {
+                _exportedCode = result.Value!;
+                _exportFormat = "csharp";
+                Snackbar.Add("Theme exported as C#!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add($"Export failed: {result.ErrorMessage}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Export failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task CopyToClipboard()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", _exportedCode);
+            Snackbar.Add("Code copied to clipboard!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Copy failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DownloadFile()
+    {
+        try
+        {
+            var fileName = $"{_exportThemeName.Replace(" ", "_")}.{(_exportFormat == "json" ? "json" : "cs")}";
+            var content = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(_exportedCode));
+            
+            await JSRuntime.InvokeVoidAsync("downloadFile", fileName, content);
+            Snackbar.Add($"File {fileName} downloaded!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Download failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OnJsonFileChanged(InputFileChangeEventArgs e)
+    {
+        _selectedFile = e.File;
+        _importCSharp = ""; // Clear C# input when JSON file is selected
+        
+        if (_selectedFile != null)
+        {
+            try
+            {
+                using var reader = new StreamReader(_selectedFile.OpenReadStream());
+                _importJson = await reader.ReadToEndAsync();
+                Snackbar.Add("JSON file loaded successfully!", Severity.Success);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Failed to read JSON file: {ex.Message}", Severity.Error);
+                _selectedFile = null;
+            }
+        }
+    }
+
+    private async Task OnCSharpFileChanged(InputFileChangeEventArgs e)
+    {
+        _selectedFile = e.File;
+        _importJson = ""; // Clear JSON input when C# file is selected
+        
+        if (_selectedFile != null)
+        {
+            try
+            {
+                using var reader = new StreamReader(_selectedFile.OpenReadStream());
+                _importCSharp = await reader.ReadToEndAsync();
+                Snackbar.Add("C# file loaded successfully!", Severity.Success);
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Failed to read C# file: {ex.Message}", Severity.Error);
+                _selectedFile = null;
+            }
+        }
+    }
+
+    private async Task ImportThemeAsync()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(_importThemeName))
+            {
+                Snackbar.Add("Please enter a theme name!", Severity.Warning);
+                return;
+            }
+
+            MudTheme? theme = null;
+            
+            // Try C# import first if C# content is provided
+            if (!string.IsNullOrWhiteSpace(_importCSharp))
+            {
+                var csharpResult = ImportExportService.ImportThemeFromCSharp(_importCSharp);
+                if (csharpResult.IsSuccess)
+                {
+                    theme = csharpResult.Value;
+                    Snackbar.Add($"Theme '{_importThemeName}' imported from C# successfully!", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add($"C# import failed: {csharpResult.ErrorMessage}", Severity.Error);
+                    return;
+                }
+            }
+            // Try JSON import if no C# content
+            else if (!string.IsNullOrWhiteSpace(_importJson))
+            {
+                var jsonResult = ImportExportService.ImportThemeFromJson(_importJson);
+                if (jsonResult.IsSuccess)
+                {
+                    theme = jsonResult.Value;
+                    Snackbar.Add($"Theme '{_importThemeName}' imported from JSON successfully!", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add($"JSON import failed: {jsonResult.ErrorMessage}", Severity.Error);
+                    return;
+                }
+            }
+            else
+            {
+                Snackbar.Add("No content to import! Please provide JSON or C# code.", Severity.Warning);
+                return;
+            }
+
+            if (theme != null)
+            {
+                try
+                {
+                    // Save the theme to the collection
+                    Dispatcher.Dispatch(new SaveThemeAction(_importThemeName, theme));
+                    
+                    // Wait a moment for the save to complete, then load the theme
+                    await Task.Delay(100);
+                    
+                    // Immediately apply the imported theme as the active theme
+                    Dispatcher.Dispatch(new LoadThemeAction(_importThemeName));
+                    
+                    // Wait another moment for the load to complete
+                    await Task.Delay(100);
+                    
+                    // Verify the theme was loaded
+                    if (ThemeState.Value.CurrentThemeName == _importThemeName)
+                    {
+                        Snackbar.Add($"Theme '{_importThemeName}' imported and applied successfully!", Severity.Success);
+                    }
+                    else
+                    {
+                        // Fallback: force update the theme directly
+                        Dispatcher.Dispatch(new UpdateThemeAction(theme));
+                        Snackbar.Add($"Theme '{_importThemeName}' imported with direct application!", Severity.Success);
+                    }
+                    
+                    // Clear form
+                    _importJson = "";
+                    _importCSharp = "";
+                    _importThemeName = "";
+                    _selectedFile = null;
+                    
+                    // Force a state refresh to ensure the theme is applied
+                    StateHasChanged();
+                }
+                catch (Exception ex)
+                {
+                    Snackbar.Add($"Error applying imported theme: {ex.Message}", Severity.Error);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Import failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ExportAllThemes()
+    {
+        try
+        {
+            var allThemes = new
+            {
+                ExportDate = DateTime.UtcNow,
+                Themes = ThemeState.Value.SavedThemes.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => {
+                        var result = ImportExportService.ExportThemeAsJson(kvp.Value);
+                        return result.IsSuccess ? result.Value! : "{}";
+                    }
+                )
+            };
+
+            var json = System.Text.Json.JsonSerializer.Serialize(allThemes, new System.Text.Json.JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+
+            var content = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(json));
+            await JSRuntime.InvokeVoidAsync("downloadFile", "all_themes.json", content);
+            
+            Snackbar.Add("All themes exported successfully!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Export failed: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void ResetToDefaults()
+    {
+        Snackbar.Add("Reset to defaults functionality would be implemented with a new Fluxor action", Severity.Info);
+    }
+}
+
+<script>
+    window.downloadFile = (fileName, content) => {
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = `data:application/octet-stream;base64,${content}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+</script>

@@ -1,0 +1,141 @@
+@page "/colors/light"
+@using Fluxor
+@using MudBlazor
+@using MudBlazorThemeEditor.Services
+@using MudBlazorThemeEditor.Store
+@using MudBlazorThemeEditor.Components
+@inject IState<ThemeState> ThemeState
+@inject IDispatcher Dispatcher
+@inject IThemeService ThemeService
+@inject ILocalizationService Localization
+@implements IDisposable
+
+<MudGrid>
+    <MudItem xs="12">
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudText Typo="Typo.h4" Color="Color.Primary">
+                <MudIcon Icon="@Icons.Material.Filled.LightMode" Class="mr-2" />
+                Light Mode Color Palette
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mt-2">
+                Customize the light theme colors. Changes are applied in real-time.
+            </MudText>
+            <MudText Typo="Typo.caption" Class="mt-1">
+                Current Theme: @ThemeState.Value.CurrentThemeName
+            </MudText>
+        </MudPaper>
+    </MudItem>
+    
+    @foreach (var colorGroup in ColorGroups)
+    {
+        <MudItem xs="12">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-4">
+                    @colorGroup.Key
+                </MudText>
+                
+                <MudGrid>
+                    @foreach (var color in colorGroup.Value)
+                    {
+                        <MudItem xs="12" sm="6" md="4" lg="3">
+                            <ColorPicker Label="@color.DisplayName"
+                                         Text="@GetColorValue(color.PropertyName)"
+                                         TextChanged="@(value => UpdateColor(color.PropertyName, value))"
+                                         ShowPreview="true"
+                                         Icon="@color.Icon" />
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudPaper>
+        </MudItem>
+    }
+</MudGrid>
+
+@code {
+    private Dictionary<string, List<ColorProperty>> ColorGroups = new()
+    {
+        ["Brand Colors"] = new()
+        {
+            new("Primary", "primary", Icons.Material.Filled.Star),
+            new("PrimaryContrastText", "primary_contrast", Icons.Material.Filled.Contrast),
+            new("Secondary", "secondary", Icons.Material.Filled.StarBorder),
+            new("SecondaryContrastText", "secondary_contrast", Icons.Material.Filled.Contrast),
+            new("Tertiary", "tertiary", Icons.Material.Filled.StarHalf),
+            new("TertiaryContrastText", "tertiary_contrast", Icons.Material.Filled.Contrast)
+        },
+        ["Semantic Colors"] = new()
+        {
+            new("Success", "success", Icons.Material.Filled.CheckCircle),
+            new("SuccessContrastText", "success_contrast", Icons.Material.Filled.Contrast),
+            new("Error", "error", Icons.Material.Filled.Error),
+            new("ErrorContrastText", "error_contrast", Icons.Material.Filled.Contrast),
+            new("Warning", "warning", Icons.Material.Filled.Warning),
+            new("WarningContrastText", "warning_contrast", Icons.Material.Filled.Contrast),
+            new("Info", "info", Icons.Material.Filled.Info),
+            new("InfoContrastText", "info_contrast", Icons.Material.Filled.Contrast)
+        },
+        ["Background Colors"] = new()
+        {
+            new("Background", "background", Icons.Material.Filled.Wallpaper),
+            new("BackgroundGray", "background_gray", Icons.Material.Filled.Gradient),
+            new("Surface", "surface", Icons.Material.Filled.Rectangle),
+            new("AppbarBackground", "appbar_bg", Icons.Material.Filled.ViewAgenda),
+            new("AppbarText", "appbar_text", Icons.Material.Filled.Title),
+            new("DrawerBackground", "drawer_bg", Icons.Material.Filled.Menu),
+            new("DrawerText", "drawer_text", Icons.Material.Filled.Title),
+            new("DrawerIcon", "drawer_icon", Icons.Material.Filled.Image)
+        },
+        ["Text Colors"] = new()
+        {
+            new("TextPrimary", "text_primary", Icons.Material.Filled.TextFields),
+            new("TextSecondary", "text_secondary", Icons.Material.Filled.TextFormat),
+            new("TextDisabled", "text_disabled", Icons.Material.Filled.FormatColorReset)
+        },
+        ["Line & Border Colors"] = new()
+        {
+            new("LinesDefault", "lines_default", Icons.Material.Filled.HorizontalRule),
+            new("LinesInputs", "lines_inputs", Icons.Material.Filled.Input),
+            new("TableLines", "table_lines", Icons.Material.Filled.TableChart),
+            new("Divider", "divider", Icons.Material.Filled.Remove),
+            new("DividerLight", "divider_light", Icons.Material.Filled.Remove)
+        }
+    };
+
+    protected override void OnInitialized()
+    {
+        // Subscribe to state changes to ensure component updates when theme changes
+        ThemeState.StateChanged += OnStateChanged;
+    }
+
+    private void OnStateChanged(object? sender, EventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private string GetColorValue(string propertyName)
+    {
+        return ThemeService.GetPalettePropertyValue(ThemeState.Value.CurrentTheme, propertyName, false);
+    }
+
+    private void UpdateColor(string propertyName, string value)
+    {
+        // Clone the current theme
+        var theme = ThemeService.CloneTheme(ThemeState.Value.CurrentTheme);
+        
+        // Update the specific property
+        ThemeService.UpdatePaletteProperty(theme, propertyName, value, false);
+        
+        // Dispatch the update action - this will trigger the MudThemeProvider update
+        Dispatcher.Dispatch(new UpdateThemeAction(theme));
+        
+        // Force immediate local state update
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        ThemeState.StateChanged -= OnStateChanged;
+    }
+
+    private record ColorProperty(string PropertyName, string DisplayName, string Icon);
+}

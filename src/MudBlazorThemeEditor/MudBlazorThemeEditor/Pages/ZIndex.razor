@@ -1,0 +1,309 @@
+@page "/zindex"
+@using Fluxor
+@using MudBlazor
+@using MudBlazorThemeEditor.Services
+@using MudBlazorThemeEditor.Store
+@using MudBlazorThemeEditor.Components
+@inject IState<ThemeState> ThemeState
+@inject IDispatcher Dispatcher
+@inject IThemeService ThemeService
+@inject ILocalizationService Localization
+@implements IDisposable
+
+<MudGrid>
+    <MudItem xs="12">
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudText Typo="Typo.h4" Color="Color.Primary">
+                <MudIcon Icon="@Icons.Material.Filled.Layers" Class="mr-2" />
+                Z-Index & Layer Management
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mt-2">
+                Customize z-index values for different UI layers. Higher values appear above lower values.
+            </MudText>
+            <MudText Typo="Typo.caption" Class="mt-1">
+                Current Theme: @ThemeState.Value.CurrentThemeName
+            </MudText>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12" lg="8">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-4">
+                Z-Index Settings
+            </MudText>
+            
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <SliderWithLabel Label="Drawer Z-Index"
+                                     Value="@GetZIndexValue("Drawer")"
+                                     ValueChanged="@(value => UpdateZIndex("Drawer", (int)value))"
+                                     Min="1000"
+                                     Max="2000"
+                                     Step="50"
+                                     DecimalPlaces="0"
+                                     Icon="@Icons.Material.Filled.Menu"
+                                     HelperText="Z-index for navigation drawer" />
+                </MudItem>
+                
+                <MudItem xs="12" md="6">
+                    <SliderWithLabel Label="AppBar Z-Index"
+                                     Value="@GetZIndexValue("AppBar")"
+                                     ValueChanged="@(value => UpdateZIndex("AppBar", (int)value))"
+                                     Min="1000"
+                                     Max="2000"
+                                     Step="50"
+                                     DecimalPlaces="0"
+                                     Icon="@Icons.Material.Filled.ViewAgenda"
+                                     HelperText="Z-index for application bar" />
+                </MudItem>
+                
+                <MudItem xs="12" md="6">
+                    <SliderWithLabel Label="Dialog Z-Index"
+                                     Value="@GetZIndexValue("Dialog")"
+                                     ValueChanged="@(value => UpdateZIndex("Dialog", (int)value))"
+                                     Min="1200"
+                                     Max="1600"
+                                     Step="50"
+                                     DecimalPlaces="0"
+                                     Icon="@Icons.Material.Filled.OpenInNew"
+                                     HelperText="Z-index for modal dialogs" />
+                </MudItem>
+                
+                <MudItem xs="12" md="6">
+                    <SliderWithLabel Label="Popover Z-Index"
+                                     Value="@GetZIndexValue("Popover")"
+                                     ValueChanged="@(value => UpdateZIndex("Popover", (int)value))"
+                                     Min="1300"
+                                     Max="1700"
+                                     Step="50"
+                                     DecimalPlaces="0"
+                                     Icon="@Icons.Material.Filled.BubbleChart"
+                                     HelperText="Z-index for dropdowns and popovers" />
+                </MudItem>
+                
+                <MudItem xs="12" md="6">
+                    <SliderWithLabel Label="Snackbar Z-Index"
+                                     Value="@GetZIndexValue("Snackbar")"
+                                     ValueChanged="@(value => UpdateZIndex("Snackbar", (int)value))"
+                                     Min="1400"
+                                     Max="1800"
+                                     Step="50"
+                                     DecimalPlaces="0"
+                                     Icon="@Icons.Material.Filled.Notifications"
+                                     HelperText="Z-index for notifications and snackbars" />
+                </MudItem>
+                
+                <MudItem xs="12" md="6">
+                    <SliderWithLabel Label="Tooltip Z-Index"
+                                     Value="@GetZIndexValue("Tooltip")"
+                                     ValueChanged="@(value => UpdateZIndex("Tooltip", (int)value))"
+                                     Min="1500"
+                                     Max="2000"
+                                     Step="50"
+                                     DecimalPlaces="0"
+                                     Icon="@Icons.Material.Filled.Help"
+                                     HelperText="Z-index for tooltips (should be highest)" />
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12" lg="4">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-4">
+                Layer Hierarchy Preview
+            </MudText>
+            
+            <MudStack Spacing="2">
+                <MudText Typo="Typo.body2">Current layer order (top to bottom):</MudText>
+                
+                @foreach (var layer in GetLayerHierarchy())
+                {
+                    <MudPaper Class="pa-2" 
+                              Style="@($"background: linear-gradient(45deg, {GetLayerColor(layer.Name)}, {GetLayerColor(layer.Name)}33); border-left: 4px solid {GetLayerColor(layer.Name)};")"
+                              Elevation="0">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                <MudIcon Icon="@GetLayerIcon(layer.Name)" Size="Size.Small" />
+                                <MudText Typo="Typo.body2"><strong>@layer.Name</strong></MudText>
+                            </MudStack>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Default">
+                                @layer.Value
+                            </MudChip>
+                        </MudStack>
+                    </MudPaper>
+                }
+                
+                <MudAlert Severity="Severity.Info" Dense="true">
+                    <MudText Typo="Typo.caption">
+                        <strong>Tip:</strong> Higher z-index values appear above lower ones. 
+                        Tooltips should have the highest value to always be visible.
+                    </MudText>
+                </MudAlert>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-4">
+                Interactive Z-Index Demo
+            </MudText>
+            
+            <MudText Typo="Typo.body2" Class="mb-3">
+                Test your z-index settings with these interactive elements:
+            </MudText>
+            
+            <MudStack Row="true" Spacing="3" Wrap="Wrap.Wrap">
+                <MudTooltip Text="This tooltip uses your custom z-index setting">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary">
+                        Hover for Tooltip
+                    </MudButton>
+                </MudTooltip>
+                
+                <MudMenu Icon="@Icons.Material.Filled.MoreVert" 
+                         Color="Color.Secondary" 
+                         Variant="Variant.Filled">
+                    <MudMenuItem>Menu Item 1</MudMenuItem>
+                    <MudMenuItem>Menu Item 2</MudMenuItem>
+                    <MudMenuItem>This menu uses Popover z-index</MudMenuItem>
+                </MudMenu>
+                
+                <MudButton Variant="Variant.Outlined" 
+                           Color="Color.Success"
+                           OnClick="ShowSnackbar">
+                    Test Snackbar Z-Index
+                </MudButton>
+                
+                <MudButton Variant="Variant.Outlined" 
+                           Color="Color.Info"
+                           OnClick="ShowDialog">
+                    Test Dialog Z-Index
+                </MudButton>
+            </MudStack>
+            
+            <MudDivider Class="my-4" />
+            
+            <MudExpansionPanels>
+                <MudExpansionPanel Text="📋 Z-Index Best Practices">
+                    <MudText Typo="Typo.body2" Class="mb-2">
+                        <strong>Recommended hierarchy (lowest to highest):</strong>
+                    </MudText>
+                    <ol>
+                        <li><strong>AppBar (1100):</strong> Should be above page content but below overlays</li>
+                        <li><strong>Drawer (1200):</strong> Should be above AppBar when open</li>
+                        <li><strong>Dialog (1300):</strong> Modal dialogs should be above navigation</li>
+                        <li><strong>Popover (1400):</strong> Dropdowns and menus should be above dialogs</li>
+                        <li><strong>Snackbar (1500):</strong> Notifications should be visible over most content</li>
+                        <li><strong>Tooltip (1600):</strong> Should be the highest to always be readable</li>
+                    </ol>
+                    
+                    <MudAlert Severity="Severity.Warning" Class="mt-3">
+                        <strong>Warning:</strong> If tooltips have a lower z-index than other elements, 
+                        they may appear behind dialogs or menus, making them unreadable.
+                    </MudAlert>
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    protected override void OnInitialized()
+    {
+        ThemeState.StateChanged += OnStateChanged;
+    }
+
+    private void OnStateChanged(object? sender, EventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        ThemeState.StateChanged -= OnStateChanged;
+    }
+
+    private double GetZIndexValue(string propertyName)
+    {
+        try
+        {
+            var zIndex = ThemeState.Value.CurrentTheme.ZIndex;
+            var property = zIndex.GetType().GetProperty(propertyName);
+            var value = property?.GetValue(zIndex);
+            return Convert.ToDouble(value ?? 1000);
+        }
+        catch
+        {
+            return 1000;
+        }
+    }
+
+    private void UpdateZIndex(string propertyName, int value)
+    {
+        var theme = ThemeService.CloneTheme(ThemeState.Value.CurrentTheme);
+        var property = theme.ZIndex.GetType().GetProperty(propertyName);
+        
+        if (property != null)
+        {
+            property.SetValue(theme.ZIndex, value);
+            Dispatcher.Dispatch(new UpdateThemeAction(theme));
+        }
+    }
+
+    private List<(string Name, int Value)> GetLayerHierarchy()
+    {
+        var zIndex = ThemeState.Value.CurrentTheme.ZIndex;
+        var layers = new List<(string Name, int Value)>
+        {
+            ("Tooltip", zIndex.Tooltip),
+            ("Snackbar", zIndex.Snackbar),
+            ("Popover", zIndex.Popover),
+            ("Dialog", zIndex.Dialog),
+            ("Drawer", zIndex.Drawer),
+            ("AppBar", zIndex.AppBar)
+        };
+        
+        return layers.OrderByDescending(x => x.Value).ToList();
+    }
+
+    private string GetLayerColor(string layerName)
+    {
+        return layerName switch
+        {
+            "Tooltip" => "#9C27B0",      // Purple
+            "Snackbar" => "#FF5722",     // Deep Orange
+            "Popover" => "#2196F3",      // Blue
+            "Dialog" => "#4CAF50",       // Green
+            "Drawer" => "#FF9800",       // Orange
+            "AppBar" => "#607D8B",       // Blue Grey
+            _ => "#757575"               // Grey
+        };
+    }
+
+    private string GetLayerIcon(string layerName)
+    {
+        return layerName switch
+        {
+            "Tooltip" => Icons.Material.Filled.Help,
+            "Snackbar" => Icons.Material.Filled.Notifications,
+            "Popover" => Icons.Material.Filled.BubbleChart,
+            "Dialog" => Icons.Material.Filled.OpenInNew,
+            "Drawer" => Icons.Material.Filled.Menu,
+            "AppBar" => Icons.Material.Filled.ViewAgenda,
+            _ => Icons.Material.Filled.Layers
+        };
+    }
+
+    private async Task ShowSnackbar()
+    {
+        // This would show a snackbar using the current z-index
+        // Implementation depends on your snackbar service
+    }
+
+    private async Task ShowDialog()
+    {
+        // This would show a dialog using the current z-index
+        // Implementation depends on your dialog service
+    }
+}

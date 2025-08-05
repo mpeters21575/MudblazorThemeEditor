@@ -1,0 +1,124 @@
+﻿@using Fluxor
+@using MudBlazor
+@using MudBlazorThemeEditor.Services
+@using MudBlazorThemeEditor.Store
+@inherits Microsoft.AspNetCore.Components.LayoutComponentBase
+@inject IState<ThemeState> ThemeState
+@inject IDispatcher Dispatcher
+@inject ILocalizationService Localization
+@implements IDisposable
+
+<MudLayout>
+    <MudAppBar Elevation="1" Color="Color.Primary">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                       Color="Color.Inherit"
+                       Edge="Edge.Start"
+                       OnClick="DrawerToggle"/>
+
+        <MudIcon Icon="@Icons.Material.Filled.Palette"
+                 Style="margin-right: 8px;"/>
+        <MudText Typo="Typo.h5" Class="ml-3">
+            @Localization.GetString("app_title")
+        </MudText>
+
+        <MudSpacer/>
+
+        <MudMenu Icon="@Icons.Material.Filled.Language"
+                 Dense="true"
+                 Color="Color.Inherit">
+            @foreach (var lang in Localization.AvailableLanguages)
+            {
+                <MudMenuItem OnClick="@(() => SetLanguage(lang.Code))">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span>@lang.Flag</span>
+                        <span>@lang.Name</span>
+                    </div>
+                </MudMenuItem>
+            }
+        </MudMenu>
+
+        <MudToggleIconButton @bind-Toggled="@_isDarkMode"
+                             Icon="@Icons.Material.Filled.LightMode"
+                             ToggledIcon="@Icons.Material.Filled.DarkMode"
+                             Color="Color.Inherit"
+                             ToggledColor="Color.Inherit"/>
+
+        <MudMenu
+            Variant="Variant.Text"
+            Size="Size.Medium"
+            Color="Color.Inherit"
+            Icon="@Icons.Material.TwoTone.MoreVert">
+            @foreach (var theme in ThemeState.Value.SavedThemes.OrderBy(t => t.Key))
+            {
+                <MudMenuItem Label="@theme.Key" OnClick="() => OnThemeChanged(theme.Key)"></MudMenuItem>
+            }
+        </MudMenu>
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen"
+               ClipMode="DrawerClipMode.Always"
+               Elevation="2"
+               Color="Color.Surface">
+        <NavMenu/>
+    </MudDrawer>
+
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pa-4">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+
+    private bool _isDarkMode
+    {
+        get => ThemeState.Value.IsDarkMode;
+        set
+        {
+            if (value != ThemeState.Value.IsDarkMode)
+            {
+                Dispatcher.Dispatch(new ToggleDarkModeAction(value));
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        // Subscribe to state changes to keep UI in sync
+        ThemeState.StateChanged += OnStateChanged;
+    }
+
+    private void OnStateChanged(object? sender, EventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+    void SetLanguage(string languageCode)
+    {
+        Localization.SetLanguage(languageCode);
+        Dispatcher.Dispatch(new SetLanguageAction(languageCode));
+        StateHasChanged();
+    }
+
+    private void OnThemeChanged(string themeName)
+    {
+        if (themeName != ThemeState.Value.CurrentThemeName)
+        {
+            Dispatcher.Dispatch(new ChangeThemeAction(themeName));
+            StateHasChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        ThemeState.StateChanged -= OnStateChanged;
+    }
+
+}

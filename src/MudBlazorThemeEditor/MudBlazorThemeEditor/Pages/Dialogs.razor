@@ -1,0 +1,471 @@
+@page "/dialogs"
+@using Fluxor
+@using MudBlazor
+@using MudBlazorThemeEditor.Services
+@using MudBlazorThemeEditor.Store
+@using MudBlazorThemeEditor.Components
+@using MudBlazorThemeEditor.Components.Dialogs
+@inject IState<ThemeState> ThemeState
+@inject IDispatcher Dispatcher
+@inject IThemeService ThemeService
+@inject ILocalizationService Localization
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@implements IDisposable
+
+<MudGrid>
+    <MudItem xs="12">
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudText Typo="Typo.h4" Color="Color.Primary">
+                <MudIcon Icon="@Icons.Material.Filled.OpenInNew" Class="mr-2" />
+                Dialog & Modal Customization
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mt-2">
+                Customize dialog appearance, behavior, and styling. Test your changes with live dialog examples.
+            </MudText>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12" lg="8">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-4">
+                Dialog Styling Properties
+            </MudText>
+            
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">Background & Surface</MudText>
+                    <MudStack Spacing="3">
+                        <ColorPicker Label="Dialog Background"
+                                     Text="@GetDialogBackgroundColor()"
+                                     TextChanged="@(value => UpdateDialogBackground(value))"
+                                     ShowPreview="true"
+                                     Icon="@Icons.Material.Filled.Rectangle" />
+                        
+                        <ColorPicker Label="Dialog Surface"
+                                     Text="@GetDialogSurfaceColor()"
+                                     TextChanged="@(value => UpdateDialogSurface(value))"
+                                     ShowPreview="true"
+                                     Icon="@Icons.Material.Filled.Layers" />
+                    </MudStack>
+                </MudItem>
+                
+                <MudItem xs="12" md="6">
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">Text & Content</MudText>
+                    <MudStack Spacing="3">
+                        <ColorPicker Label="Dialog Text Primary"
+                                     Text="@GetDialogTextColor()"
+                                     TextChanged="@(value => UpdateDialogText(value))"
+                                     ShowPreview="true"
+                                     Icon="@Icons.Material.Filled.TextFields" />
+                        
+                        <ColorPicker Label="Dialog Border/Divider"
+                                     Text="@GetDialogDividerColor()"
+                                     TextChanged="@(value => UpdateDialogDivider(value))"
+                                     ShowPreview="true"
+                                     Icon="@Icons.Material.Filled.HorizontalRule" />
+                    </MudStack>
+                </MudItem>
+                
+                <MudItem xs="12" md="6">
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">Shadow & Elevation</MudText>
+                    <SliderWithLabel Label="Dialog Z-Index"
+                                     Value="@GetDialogZIndex()"
+                                     ValueChanged="@(value => UpdateDialogZIndex((int)value))"
+                                     Min="1200"
+                                     Max="1600"
+                                     Step="50"
+                                     DecimalPlaces="0"
+                                     Icon="@Icons.Material.Filled.ViewInAr"
+                                     HelperText="Controls dialog stacking order" />
+                </MudItem>
+                
+                <MudItem xs="12" md="6">
+                    <MudText Typo="Typo.subtitle2" Class="mb-2">Border & Radius</MudText>
+                    <SliderWithLabel Label="Dialog Border Radius"
+                                     Value="@GetDialogBorderRadius()"
+                                     ValueChanged="@(value => UpdateDialogBorderRadius(value))"
+                                     Min="0"
+                                     Max="20"
+                                     Step="1"
+                                     DecimalPlaces="0"
+                                     Unit="px"
+                                     Icon="@Icons.Material.Filled.RoundedCorner"
+                                     HelperText="Rounded corners for dialogs" />
+                </MudItem>
+            </MudGrid>
+            
+            <MudDivider Class="my-4" />
+            
+            <MudText Typo="Typo.subtitle2" Class="mb-3">Overlay & Backdrop</MudText>
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <ColorPicker Label="Overlay Dark"
+                                 Text="@GetOverlayDarkColor()"
+                                 TextChanged="@(value => UpdateOverlayDark(value))"
+                                 ShowPreview="true"
+                                 Icon="@Icons.Material.Filled.Opacity" />
+                </MudItem>
+                
+                <MudItem xs="12" md="6">
+                    <SliderWithLabel Label="Overlay Opacity"
+                                     Value="@GetOverlayOpacity()"
+                                     ValueChanged="@(value => UpdateOverlayOpacity(value))"
+                                     Min="0"
+                                     Max="1"
+                                     Step="0.05"
+                                     DecimalPlaces="2"
+                                     Icon="@Icons.Material.Filled.Tune"
+                                     HelperText="Background dimming intensity" />
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12" lg="4">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-4">
+                Live Dialog Tests
+            </MudText>
+            
+            <MudStack Spacing="3">
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Info"
+                           OnClick="ShowInfoDialog"
+                           FullWidth="true">
+                    Test Info Dialog
+                </MudButton>
+                
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Success"
+                           StartIcon="@Icons.Material.Filled.CheckCircle"
+                           OnClick="ShowConfirmDialog"
+                           FullWidth="true">
+                    Test Confirm Dialog
+                </MudButton>
+                
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Warning"
+                           StartIcon="@Icons.Material.Filled.Warning"
+                           OnClick="ShowFormDialog"
+                           FullWidth="true">
+                    Test Form Dialog
+                </MudButton>
+                
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Error"
+                           StartIcon="@Icons.Material.Filled.Delete"
+                           OnClick="ShowDeleteDialog"
+                           FullWidth="true">
+                    Test Delete Dialog
+                </MudButton>
+                
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Secondary"
+                           StartIcon="@Icons.Material.Filled.Fullscreen"
+                           OnClick="ShowFullscreenDialog"
+                           FullWidth="true">
+                    Test Fullscreen Dialog
+                </MudButton>
+                
+                <MudDivider Class="my-2" />
+                
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    <strong>Current Settings:</strong><br/>
+                    Z-Index: @GetDialogZIndex()<br/>
+                    Border Radius: @GetDialogBorderRadius()px<br/>
+                    Background: @GetDialogBackgroundColor()
+                </MudText>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-4">
+                Dialog Design Guidelines
+            </MudText>
+            
+            <MudExpansionPanels>
+                <MudExpansionPanel Text="📋 Best Practices">
+                    <MudText Typo="Typo.body2" Class="mb-2">
+                        <strong>Visual Hierarchy:</strong>
+                    </MudText>
+                    <ul>
+                        <li><strong>Z-Index:</strong> Dialogs should appear above all other content (1300+)</li>
+                        <li><strong>Contrast:</strong> Ensure sufficient contrast between dialog background and text</li>
+                        <li><strong>Border Radius:</strong> Should match your overall design system (4-8px recommended)</li>
+                        <li><strong>Overlay:</strong> Dark overlay with 40-60% opacity provides good focus</li>
+                    </ul>
+                </MudExpansionPanel>
+                
+                <MudExpansionPanel Text="🎨 Color Recommendations">
+                    <MudGrid>
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.body2"><strong>Light Mode:</strong></MudText>
+                            <ul>
+                                <li>Background: White (#FFFFFF) or light surface</li>
+                                <li>Text: Dark colors for readability</li>
+                                <li>Overlay: rgba(0,0,0,0.4)</li>
+                            </ul>
+                        </MudItem>
+                        <MudItem xs="12" md="6">
+                            <MudText Typo="Typo.body2"><strong>Dark Mode:</strong></MudText>
+                            <ul>
+                                <li>Background: Dark surface colors</li>
+                                <li>Text: Light colors for contrast</li>
+                                <li>Overlay: rgba(0,0,0,0.6)</li>
+                            </ul>
+                        </MudItem>
+                    </MudGrid>
+                </MudExpansionPanel>
+                
+                <MudExpansionPanel Text="⚡ Performance Tips">
+                    <MudText Typo="Typo.body2">
+                        <strong>Optimization:</strong>
+                    </MudText>
+                    <ul>
+                        <li>Use appropriate z-index values to avoid rendering issues</li>
+                        <li>Keep border radius moderate to avoid performance impact on mobile</li>
+                        <li>Test dialogs with long content to ensure proper scrolling</li>
+                        <li>Verify overlay opacity provides good focus without being too dark</li>
+                    </ul>
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    protected override void OnInitialized()
+    {
+        ThemeState.StateChanged += OnStateChanged;
+    }
+
+    private void OnStateChanged(object? sender, EventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        ThemeState.StateChanged -= OnStateChanged;
+    }
+
+    // Dialog Background (uses Surface color)
+    private string GetDialogBackgroundColor()
+    {
+        return ThemeService.GetPalettePropertyValue(ThemeState.Value.CurrentTheme, "Surface", ThemeState.Value.IsDarkMode);
+    }
+
+    private void UpdateDialogBackground(string value)
+    {
+        var theme = ThemeService.CloneTheme(ThemeState.Value.CurrentTheme);
+        ThemeService.UpdatePaletteProperty(theme, "Surface", value, ThemeState.Value.IsDarkMode);
+        Dispatcher.Dispatch(new UpdateThemeAction(theme));
+    }
+
+    // Dialog Surface (alternative surface for cards within dialogs)
+    private string GetDialogSurfaceColor()
+    {
+        return ThemeService.GetPalettePropertyValue(ThemeState.Value.CurrentTheme, "Background", ThemeState.Value.IsDarkMode);
+    }
+
+    private void UpdateDialogSurface(string value)
+    {
+        var theme = ThemeService.CloneTheme(ThemeState.Value.CurrentTheme);
+        ThemeService.UpdatePaletteProperty(theme, "Background", value, ThemeState.Value.IsDarkMode);
+        Dispatcher.Dispatch(new UpdateThemeAction(theme));
+    }
+
+    // Dialog Text
+    private string GetDialogTextColor()
+    {
+        return ThemeService.GetPalettePropertyValue(ThemeState.Value.CurrentTheme, "TextPrimary", ThemeState.Value.IsDarkMode);
+    }
+
+    private void UpdateDialogText(string value)
+    {
+        var theme = ThemeService.CloneTheme(ThemeState.Value.CurrentTheme);
+        ThemeService.UpdatePaletteProperty(theme, "TextPrimary", value, ThemeState.Value.IsDarkMode);
+        Dispatcher.Dispatch(new UpdateThemeAction(theme));
+    }
+
+    // Dialog Divider
+    private string GetDialogDividerColor()
+    {
+        return ThemeService.GetPalettePropertyValue(ThemeState.Value.CurrentTheme, "Divider", ThemeState.Value.IsDarkMode);
+    }
+
+    private void UpdateDialogDivider(string value)
+    {
+        var theme = ThemeService.CloneTheme(ThemeState.Value.CurrentTheme);
+        ThemeService.UpdatePaletteProperty(theme, "Divider", value, ThemeState.Value.IsDarkMode);
+        Dispatcher.Dispatch(new UpdateThemeAction(theme));
+    }
+
+    // Dialog Z-Index
+    private double GetDialogZIndex()
+    {
+        return ThemeService.GetZIndexPropertyValue(ThemeState.Value.CurrentTheme, "Dialog");
+    }
+
+    private void UpdateDialogZIndex(int value)
+    {
+        var theme = ThemeService.CloneTheme(ThemeState.Value.CurrentTheme);
+        ThemeService.UpdateZIndexProperty(theme, "Dialog", value);
+        Dispatcher.Dispatch(new UpdateThemeAction(theme));
+    }
+
+    // Dialog Border Radius
+    private double GetDialogBorderRadius()
+    {
+        try
+        {
+            var value = ThemeService.GetLayoutPropertyValue(ThemeState.Value.CurrentTheme, "DefaultBorderRadius");
+            if (value.EndsWith("rem"))
+            {
+                var numValue = value.Replace("rem", "").Replace(".", ",");
+                return double.TryParse(numValue, out var result) ? result * 16 : 5;
+            }
+            if (value.EndsWith("px"))
+            {
+                var numValue = value.Replace("px", "");
+                return double.TryParse(numValue, out var result) ? result : 5;
+            }
+            return 5;
+        }
+        catch
+        {
+            return 5;
+        }
+    }
+
+    private void UpdateDialogBorderRadius(double value)
+    {
+        var theme = ThemeService.CloneTheme(ThemeState.Value.CurrentTheme);
+        theme.LayoutProperties.DefaultBorderRadius = $"{value}px";
+        Dispatcher.Dispatch(new UpdateThemeAction(theme));
+    }
+
+    // Overlay Colors
+    private string GetOverlayDarkColor()
+    {
+        return ThemeService.GetPalettePropertyValue(ThemeState.Value.CurrentTheme, "OverlayDark", ThemeState.Value.IsDarkMode);
+    }
+
+    private void UpdateOverlayDark(string value)
+    {
+        var theme = ThemeService.CloneTheme(ThemeState.Value.CurrentTheme);
+        ThemeService.UpdatePaletteProperty(theme, "OverlayDark", value, ThemeState.Value.IsDarkMode);
+        Dispatcher.Dispatch(new UpdateThemeAction(theme));
+    }
+
+    private double GetOverlayOpacity()
+    {
+        try
+        {
+            var overlay = GetOverlayDarkColor();
+            if (overlay.Contains("rgba"))
+            {
+                var parts = overlay.Split(',');
+                if (parts.Length >= 4)
+                {
+                    var alphaStr = parts[3].Replace(")", "").Trim();
+                    return double.TryParse(alphaStr, out var alpha) ? alpha : 0.4;
+                }
+            }
+            return 0.4;
+        }
+        catch
+        {
+            return 0.4;
+        }
+    }
+
+    private void UpdateOverlayOpacity(double value)
+    {
+        var theme = ThemeService.CloneTheme(ThemeState.Value.CurrentTheme);
+        var overlayColor = $"rgba(0,0,0,{value:F2})";
+        ThemeService.UpdatePaletteProperty(theme, "OverlayDark", overlayColor, ThemeState.Value.IsDarkMode);
+        Dispatcher.Dispatch(new UpdateThemeAction(theme));
+    }
+
+    // Dialog Test Methods
+    private async Task ShowInfoDialog()
+    {
+        var dialog = await DialogService.ShowAsync<TestInfoDialog>("Information Dialog");
+        await dialog.Result;
+    }
+
+    private async Task ShowConfirmDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", "Are you sure you want to perform this action? This is a test of the confirm dialog styling." },
+            { "ButtonText", "Confirm" },
+            { "Color", Color.Success }
+        };
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Confirm Action", parameters);
+        var result = await dialog.Result;
+        
+        if (!result.Canceled)
+        {
+            Snackbar.Add("Action confirmed!", Severity.Success);
+        }
+    }
+
+    private async Task ShowFormDialog()
+    {
+        var dialog = await DialogService.ShowAsync<TestFormDialog>("Form Dialog");
+        var result = await dialog.Result;
+        
+        if (!result.Canceled && result.Data is string name)
+        {
+            Snackbar.Add($"Form submitted with name: {name}", Severity.Info);
+        }
+    }
+
+    private async Task ShowDeleteDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", "This action cannot be undone. Are you sure you want to delete this item?" },
+            { "ButtonText", "Delete" },
+            { "Color", Color.Error }
+        };
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Delete Item", parameters);
+        var result = await dialog.Result;
+        
+        if (!result.Canceled)
+        {
+            Snackbar.Add("Item deleted!", Severity.Warning);
+        }
+    }
+
+    private async Task ShowFullscreenDialog()
+    {
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Large,
+            FullWidth = true,
+            CloseButton = true,
+            BackdropClick = false
+        };
+
+        var dialog = await DialogService.ShowAsync<TestFullscreenDialog>("Fullscreen Dialog", options);
+        await dialog.Result;
+    }
+}
+
+@* Test Dialog Components *@
+@code {
+    // These would typically be in separate files, but including here for completeness
+}
+
+<MudDialog @if="false">
+    @* Test Info Dialog Component *@
+</MudDialog>

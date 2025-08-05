@@ -1,0 +1,154 @@
+﻿@page "/"
+@inject ILocalizationService Localization
+@inject IState<ThemeState> ThemeState
+
+<MudGrid>
+    <MudItem xs="12">
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudStack>
+                <MudText Typo="Typo.h3" Color="Color.Primary">
+                    @Localization.GetString("app_title")
+                </MudText>
+                <MudText Typo="Typo.body1">
+                    @Localization.GetString("welcome_message")
+                </MudText>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudStack>
+                <MudText Typo="Typo.h5" Color="Color.Primary">
+                    <MudIcon Icon="@Icons.Material.Filled.Palette" Class="mr-2" />
+                    @Localization.GetString("color_palette_preview")
+                </MudText>
+                
+                <MudGrid>
+                    <MudItem xs="6" sm="4">
+                        <MudButton FullWidth="true" Color="Color.Primary" Variant="Variant.Filled">
+                            @Localization.GetString("primary")
+                        </MudButton>
+                    </MudItem>
+                    <MudItem xs="6" sm="4">
+                        <MudButton FullWidth="true" Color="Color.Secondary" Variant="Variant.Filled">
+                            @Localization.GetString("secondary")
+                        </MudButton>
+                    </MudItem>
+                    <MudItem xs="6" sm="4">
+                        <MudButton FullWidth="true" Color="Color.Success" Variant="Variant.Filled">
+                            @Localization.GetString("success")
+                        </MudButton>
+                    </MudItem>
+                    <MudItem xs="6" sm="4">
+                        <MudButton FullWidth="true" Color="Color.Error" Variant="Variant.Filled">
+                            @Localization.GetString("error")
+                        </MudButton>
+                    </MudItem>
+                    <MudItem xs="6" sm="4">
+                        <MudButton FullWidth="true" Color="Color.Warning" Variant="Variant.Filled">
+                            @Localization.GetString("warning")
+                        </MudButton>
+                    </MudItem>
+                    <MudItem xs="6" sm="4">
+                        <MudButton FullWidth="true" Color="Color.Info" Variant="Variant.Filled">
+                            @Localization.GetString("info")
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudStack>
+                <MudText Typo="Typo.h5" Color="Color.Primary">
+                    <MudIcon Icon="@Icons.Material.Filled.TextFields" Class="mr-2" />
+                    @Localization.GetString("typography_preview")
+                </MudText>
+                
+                <MudText Typo="Typo.h4">@Localization.GetString("heading_4")</MudText>
+                <MudText Typo="Typo.h5">@Localization.GetString("heading_5")</MudText>
+                <MudText Typo="Typo.h6">@Localization.GetString("heading_6")</MudText>
+                <MudText Typo="Typo.subtitle1">@Localization.GetString("subtitle_1")</MudText>
+                <MudText Typo="Typo.subtitle2">@Localization.GetString("subtitle_2")</MudText>
+                <MudText Typo="Typo.body1">@Localization.GetString("body_1") - Lorem ipsum dolor sit amet</MudText>
+                <MudText Typo="Typo.body2">@Localization.GetString("body_2") - consectetur adipiscing elit</MudText>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudStack>
+                <MudText Typo="Typo.h5" Color="Color.Primary">
+                    <MudIcon Icon="@Icons.Material.Filled.Dashboard" Class="mr-2" />
+                    @Localization.GetString("component_showcase")
+                </MudText>
+                
+                <MudGrid>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudTextField @bind-Value="sampleText" 
+                                      Label="@Localization.GetString("sample_input")" 
+                                      Variant="Variant.Outlined" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudSelect @bind-Value="selectedOption" 
+                                   Label="@Localization.GetString("select_option")" 
+                                   Variant="Variant.Outlined">
+                            <MudSelectItem Value="@("Option 1")">@Localization.GetString("option_1")</MudSelectItem>
+                            <MudSelectItem Value="@("Option 2")">@Localization.GetString("option_2")</MudSelectItem>
+                            <MudSelectItem Value="@("Option 3")">@Localization.GetString("option_3")</MudSelectItem>
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudCheckBox T="bool" @bind-Value="sampleCheck" 
+                                     Label="@Localization.GetString("sample_checkbox")" 
+                                     Color="Color.Primary" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudSwitch T="bool" @bind-Value="sampleSwitch" 
+                                   Label="@Localization.GetString("sample_switch")" 
+                                   Color="Color.Primary" />
+                    </MudItem>
+                </MudGrid>
+                
+                <MudAlert Severity="Severity.Info" Class="mt-4">
+                    @Localization.GetString("sample_alert")
+                </MudAlert>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudStack>
+                <MudText Typo="Typo.h5" Color="Color.Primary">
+                    <MudIcon Icon="@Icons.Material.Filled.Info" Class="mr-2" />
+                    @Localization.GetString("current_theme"): @ThemeState.Value.CurrentThemeName
+                </MudText>
+                <MudText Typo="Typo.body2">
+                    @GetThemeModeLanguageText()
+                </MudText>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private string sampleText = "Sample text";
+    private string selectedOption = "Option 1";
+    private bool sampleCheck = true;
+    private bool sampleSwitch = false;
+    
+    private string GetThemeModeLanguageText()
+    {
+        var modeText = ThemeState.Value.IsDarkMode ? Localization.GetString("dark_mode") : Localization.GetString("light_mode");
+        var languageText = Localization.CurrentLanguage;
+    
+        return Localization.GetString("theme_mode_language")
+            .Replace("{0}", modeText)
+            .Replace("{1}", languageText);
+    }
+}

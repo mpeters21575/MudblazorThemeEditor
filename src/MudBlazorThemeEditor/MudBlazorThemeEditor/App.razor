@@ -1,0 +1,94 @@
+﻿@using Fluxor
+@using MudBlazorThemeEditor.Store
+@using MudBlazorThemeEditor.Services
+@inject IState<ThemeState> ThemeState
+@inject IDispatcher Dispatcher
+@implements IDisposable
+
+<MudThemeProvider @key="@_themeKey" @ref="_mudThemeProvider" Theme="@_currentTheme" IsDarkMode="@_isDarkMode" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<Fluxor.Blazor.Web.StoreInitializer />
+
+<HeadContent>
+    <title>@_currentPageTitle</title>
+</HeadContent>
+
+<Router AppAssembly="@typeof(App).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <LayoutView Layout="@typeof(MainLayout)">
+            <p role="alert">Sorry, there's nothing at this address.</p>
+        </LayoutView>
+    </NotFound>
+</Router>
+
+@code {
+    private MudThemeProvider _mudThemeProvider = null!;
+    private MudTheme _currentTheme = CashableTheme.Theme;
+    private bool _isDarkMode;
+    private string _currentPageTitle = "MudBlazor Theme Editor";
+    private string _themeKey = Guid.NewGuid().ToString();
+
+    protected override void OnInitialized()
+    {
+        // Subscribe to theme state changes
+        ThemeState.StateChanged += OnThemeStateChanged;
+        
+        // Initialize with current state
+        UpdateThemeFromState();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Force a state update on first render to ensure theme is applied
+             StateHasChanged();
+        }
+    }
+
+    private void UpdateThemeFromState()
+    {
+        var newTheme = ThemeState.Value.CurrentTheme;
+        var newDarkMode = ThemeState.Value.IsDarkMode;
+        var currentThemeName = ThemeState.Value.CurrentThemeName;
+
+        Console.WriteLine($"UpdateThemeFromState called - Theme: {currentThemeName}, IsDarkMode: {newDarkMode}");
+        Console.WriteLine($"Primary Color: {newTheme.PaletteLight.Primary}");
+        
+        // Debug shadow information
+        if (newTheme.Shadows?.Elevation != null)
+        {
+            Console.WriteLine($"Theme has {newTheme.Shadows.Elevation.Length} shadow levels");
+            Console.WriteLine($"Elevation 4 shadow: {newTheme.Shadows.Elevation[4]}");
+        }
+
+        // Always update the theme when state changes - don't rely on reference equality
+        // since we create new instances in reducers for immutability
+        _currentTheme = newTheme;
+        _isDarkMode = newDarkMode;
+        
+        // Force the MudThemeProvider to recreate by changing its key
+        _themeKey = Guid.NewGuid().ToString();
+        Console.WriteLine($"New theme key: {_themeKey}");
+
+        // Force UI update to reflect theme changes
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnThemeStateChanged(object? sender, EventArgs e)
+    {
+        UpdateThemeFromState();
+    }
+    
+    public void Dispose()
+    {
+        ThemeState.StateChanged -= OnThemeStateChanged;
+    }
+}

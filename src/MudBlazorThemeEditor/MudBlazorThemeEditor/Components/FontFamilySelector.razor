@@ -1,0 +1,189 @@
+@using MudBlazor
+
+<MudStack Spacing="2">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+        @if (!string.IsNullOrEmpty(Icon))
+        {
+            <MudIcon Icon="@Icon" Color="Color.Primary" Size="Size.Small" />
+        }
+        <MudText Typo="Typo.body2">@Label</MudText>
+    </MudStack>
+    
+    <MudAutocomplete T="string"
+                     Value="@_currentSelectionText"
+                     ValueChanged="@OnSelectionTextChanged"
+                     SearchFunc="SearchNewFonts"
+                     ToStringFunc="@(x => x)"
+                     Label="Type or select fonts"
+                     Variant="Variant.Outlined"
+                     AdornmentIcon="@Icons.Material.Filled.FontDownload"
+                     Adornment="Adornment.Start"
+                     OnAdornmentClick="@ToggleDropdown"
+                     Clearable="true"
+                     ResetValueOnEmptyText="false"
+                     CoerceText="false"
+                     ShowProgressIndicator="false"
+                     MaxItems="null">
+        <ItemTemplate Context="font">
+            <div style="@($"font-family: {font}; padding: 8px;")">
+                @font
+            </div>
+        </ItemTemplate>
+    </MudAutocomplete>
+    
+    <MudPaper Class="pa-2" Elevation="1">
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">Selected Fonts:</MudText>
+        
+        @if (SelectedFonts?.Any() == true)
+        {
+            <MudStack Row="true" Spacing="1" Wrap="Wrap.Wrap">
+                @foreach (var font in SelectedFonts)
+                {
+                    <MudChip T="string" 
+                             Text="@font" 
+                             OnClose="@(() => RemoveFont(font))"
+                             Style="@($"font-family: {font}")">
+                        @font
+                    </MudChip>
+                }
+            </MudStack>
+        }
+        else
+        {
+            <MudText Typo="Typo.body2" Color="Color.Secondary">No fonts selected</MudText>
+        }
+    </MudPaper>
+    
+    @if (!string.IsNullOrEmpty(HelperText))
+    {
+        <MudText Typo="Typo.caption" Color="Color.Secondary">
+            @HelperText
+        </MudText>
+    }
+    
+    @if (SelectedFonts?.Any() == true)
+    {
+        <MudPaper Class="pa-3" Elevation="1">
+            <MudText Typo="Typo.caption" Color="Color.Secondary">Preview:</MudText>
+            <MudText Typo="Typo.h6" Style="@($"font-family: {string.Join(", ", SelectedFonts)}")">
+                The quick brown fox jumps over the lazy dog
+            </MudText>
+            <MudText Typo="Typo.body1" Style="@($"font-family: {string.Join(", ", SelectedFonts)}")">
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+            </MudText>
+        </MudPaper>
+    }
+</MudStack>
+
+@code {
+    [Parameter] public string Label { get; set; } = "";
+    [Parameter] public IEnumerable<string> Value { get; set; } = new List<string>();
+    [Parameter] public EventCallback<IEnumerable<string>> ValueChanged { get; set; }
+    [Parameter] public string Icon { get; set; } = "";
+    [Parameter] public string HelperText { get; set; } = "";
+
+    private string _currentSelectionText = "";
+
+    private IEnumerable<string> SelectedFonts
+    {
+        get => Value ?? new List<string>();
+        set => ValueChanged.InvokeAsync(value);
+    }
+
+    private readonly List<string> AvailableFonts = new()
+    {
+        // Web-safe sans-serif fonts
+        "Inter",
+        "Roboto",
+        "Helvetica Neue",
+        "Helvetica",
+        "Arial",
+        "Segoe UI",
+        "System UI",
+        "Apple System",
+        "San Francisco",
+        "Lato",
+        "Open Sans",
+        "Nunito Sans",
+        "Source Sans Pro",
+        "Ubuntu",
+        "Fira Sans",
+        "Poppins",
+        "Montserrat",
+        "Noto Sans",
+        
+        // Serif fonts
+        "Times New Roman",
+        "Times",
+        "Georgia",
+        "Garamond",
+        "Baskerville",
+        "Minion Pro",
+        "Source Serif Pro",
+        "Playfair Display",
+        "Lora",
+        "Crimson Text",
+        "Merriweather",
+        
+        // Monospace fonts
+        "Monaco",
+        "Consolas",
+        "Courier New",
+        "Fira Code",
+        "Source Code Pro",
+        "JetBrains Mono",
+        "Cascadia Code",
+        "SF Mono",
+        "Menlo",
+        "Inconsolata",
+        
+        // Generic families (fallbacks)
+        "sans-serif",
+        "serif",
+        "monospace",
+        "cursive",
+        "fantasy"
+    };
+    
+    private async Task OnSelectionTextChanged(string selectedFont)
+    {
+        if (!string.IsNullOrEmpty(selectedFont) && AvailableFonts.Contains(selectedFont))
+        {
+            await AddFont(selectedFont);
+            _currentSelectionText = ""; // Clear the input after selection
+        }
+    }
+
+    private async Task AddFont(string font)
+    {
+        if (!SelectedFonts.Contains(font))
+        {
+            var newFonts = SelectedFonts.ToList();
+            newFonts.Add(font);
+            await ValueChanged.InvokeAsync(newFonts);
+        }
+    }
+
+    private async Task RemoveFont(string font)
+    {
+        var newFonts = SelectedFonts.Where(f => f != font).ToList();
+        await ValueChanged.InvokeAsync(newFonts);
+    }
+
+    private void ToggleDropdown()
+    {
+        // This will trigger the autocomplete to show suggestions
+        _currentSelectionText = "";
+    }
+
+    private async Task<IEnumerable<string>>? SearchNewFonts(string? arg1, CancellationToken arg2)
+    {
+        if (string.IsNullOrEmpty(arg1))
+            return AvailableFonts.Take(10);
+
+        return AvailableFonts
+            .Where(font => font.Contains(arg1, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+    }
+
+}

@@ -1,0 +1,109 @@
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="4">
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudText Typo="Typo.h4" Color="Color.Primary">
+                    <MudIcon Icon="@Icons.Material.Filled.Fullscreen" Class="mr-2" />
+                    Fullscreen Dialog Demo
+                </MudText>
+                <MudText Typo="Typo.body1">
+                    This is a large dialog that demonstrates how your theme works with more complex content and layouts.
+                </MudText>
+            </MudPaper>
+            
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudPaper Class="pa-3" Elevation="1">
+                        <MudText Typo="Typo.h6" Class="mb-3">Theme Colors Preview</MudText>
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
+                            <MudChip T="string" Color="Color.Primary">Primary</MudChip>
+                            <MudChip T="string" Color="Color.Secondary">Secondary</MudChip>
+                            <MudChip T="string" Color="Color.Tertiary">Tertiary</MudChip>
+                            <MudChip T="string" Color="Color.Success">Success</MudChip>
+                            <MudChip T="string" Color="Color.Info">Info</MudChip>
+                            <MudChip T="string" Color="Color.Warning">Warning</MudChip>
+                            <MudChip T="string" Color="Color.Error">Error</MudChip>
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+                
+                <MudItem xs="12" md="6">
+                    <MudPaper Class="pa-3" Elevation="1">
+                        <MudText Typo="Typo.h6" Class="mb-3">Interactive Elements</MudText>
+                        <MudStack Spacing="2">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true">
+                                Primary Button
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" FullWidth="true">
+                                Secondary Button
+                            </MudButton>
+                            <MudProgressLinear Color="Color.Primary" Value="75" />
+                        </MudStack>
+                    </MudPaper>
+                </MudItem>
+                
+                <MudItem xs="12">
+                    <MudTable Items="@_sampleData" Dense="true" Hover="true" Striped="true">
+                        <HeaderContent>
+                            <MudTh>Name</MudTh>
+                            <MudTh>Role</MudTh>
+                            <MudTh>Status</MudTh>
+                            <MudTh>Actions</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Name">@context.Name</MudTd>
+                            <MudTd DataLabel="Role">@context.Role</MudTd>
+                            <MudTd DataLabel="Status">
+                                <MudChip T="string" 
+                                         Color="@(context.IsActive ? Color.Success : Color.Default)" 
+                                         Size="Size.Small">
+                                    @(context.IsActive ? "Active" : "Inactive")
+                                </MudChip>
+                            </MudTd>
+                            <MudTd DataLabel="Actions">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudItem>
+            </MudGrid>
+            
+            <MudDivider />
+            
+            <MudAlert Severity="Severity.Success">
+                <strong>Dialog Theme Test Complete!</strong><br/>
+                This dialog showcases how your custom theme affects various components within modal dialogs.
+                Notice the background colors, text contrast, borders, and interactive elements.
+            </MudAlert>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" StartIcon="@Icons.Material.Filled.Close">
+            Close
+        </MudButton>
+        <MudButton Color="Color.Primary" 
+                   Variant="Variant.Filled" 
+                   OnClick="Submit"
+                   StartIcon="@Icons.Material.Filled.Check">
+            Looks Great!
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+
+    private readonly List<SampleUser> _sampleData = new()
+    {
+        new("John Doe", "Developer", true),
+        new("Jane Smith", "Designer", true),
+        new("Bob Johnson", "Manager", false),
+        new("Alice Brown", "Analyst", true)
+    };
+
+    void Submit() => MudDialog.Close(DialogResult.Ok(true));
+    void Cancel() => MudDialog.Cancel();
+
+    private record SampleUser(string Name, string Role, bool IsActive);
+}

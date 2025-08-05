@@ -1,0 +1,146 @@
+@page "/colors/dark"
+@using Fluxor
+@using MudBlazor
+@using MudBlazorThemeEditor.Services
+@using MudBlazorThemeEditor.Store
+@using MudBlazorThemeEditor.Components
+@inject IState<ThemeState> ThemeState
+@inject IDispatcher Dispatcher
+@inject IThemeService ThemeService
+@inject ILocalizationService Localization
+@implements IDisposable
+
+<MudGrid>
+    <MudItem xs="12">
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudText Typo="Typo.h4" Color="Color.Primary">
+                <MudIcon Icon="@Icons.Material.Filled.DarkMode" Class="mr-2" />
+                Dark Mode Color Palette
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mt-2">
+                Customize the dark theme colors. Switch to dark mode to see changes in real-time.
+            </MudText>
+            <MudText Typo="Typo.caption" Class="mt-1">
+                Current Theme: @ThemeState.Value.CurrentThemeName (Dark Mode: @ThemeState.Value.IsDarkMode)
+            </MudText>
+        </MudPaper>
+    </MudItem>
+    
+    @foreach (var colorGroup in ColorGroups)
+    {
+        <MudItem xs="12">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-4">
+                    @colorGroup.Key
+                </MudText>
+                
+                <MudGrid>
+                    @foreach (var color in colorGroup.Value)
+                    {
+                        <MudItem xs="12" sm="6" md="4" lg="3">
+                            <ColorPicker Label="@color.DisplayName"
+                                         Text="@GetColorValue(color.PropertyName)"
+                                         TextChanged="@(value => UpdateColor(color.PropertyName, value))"
+                                         ShowPreview="true"
+                                         Icon="@color.Icon" />
+                        </MudItem>
+                    }
+                </MudGrid>
+            </MudPaper>
+        </MudItem>
+    }
+</MudGrid>
+
+@code {
+    private Dictionary<string, List<ColorProperty>> ColorGroups = new()
+    {
+        ["Brand Colors"] = new()
+        {
+            new("Primary", "Primary", Icons.Material.Filled.Star),
+            new("PrimaryContrastText", "PrimaryContrastText", Icons.Material.Filled.Contrast),
+            new("Secondary", "Secondary", Icons.Material.Filled.StarBorder),
+            new("SecondaryContrastText", "SecondaryContrastText", Icons.Material.Filled.Contrast),
+            new("Tertiary", "Tertiary", Icons.Material.Filled.StarHalf),
+            new("TertiaryContrastText", "TertiaryContrastText", Icons.Material.Filled.Contrast)
+        },
+        ["Semantic Colors"] = new()
+        {
+            new("Success", "Success", Icons.Material.Filled.CheckCircle),
+            new("SuccessContrastText", "SuccessContrastText", Icons.Material.Filled.Contrast),
+            new("Error", "Error", Icons.Material.Filled.Error),
+            new("ErrorContrastText", "ErrorContrastText", Icons.Material.Filled.Contrast),
+            new("Warning", "Warning", Icons.Material.Filled.Warning),
+            new("WarningContrastText", "WarningContrastText", Icons.Material.Filled.Contrast),
+            new("Info", "Info", Icons.Material.Filled.Info),
+            new("InfoContrastText", "InfoContrastText", Icons.Material.Filled.Contrast)
+        },
+        ["Background Colors"] = new()
+        {
+            new("Background", "Background", Icons.Material.Filled.Wallpaper),
+            new("BackgroundGray", "BackgroundGray", Icons.Material.Filled.Gradient),
+            new("Surface", "Surface", Icons.Material.Filled.Rectangle),
+            new("AppbarBackground", "AppbarBackground", Icons.Material.Filled.ViewAgenda),
+            new("AppbarText", "AppbarText", Icons.Material.Filled.Title),
+            new("DrawerBackground", "DrawerBackground", Icons.Material.Filled.Menu),
+            new("DrawerText", "DrawerText", Icons.Material.Filled.Title),
+            new("DrawerIcon", "DrawerIcon", Icons.Material.Filled.Image)
+        },
+        ["Text Colors"] = new()
+        {
+            new("TextPrimary", "TextPrimary", Icons.Material.Filled.TextFields),
+            new("TextSecondary", "TextSecondary", Icons.Material.Filled.TextFormat),
+            new("TextDisabled", "TextDisabled", Icons.Material.Filled.FormatColorReset)
+        },
+        ["Line & Border Colors"] = new()
+        {
+            new("LinesDefault", "LinesDefault", Icons.Material.Filled.HorizontalRule),
+            new("LinesInputs", "LinesInputs", Icons.Material.Filled.Input),
+            new("TableLines", "TableLines", Icons.Material.Filled.TableChart),
+            new("Divider", "Divider", Icons.Material.Filled.Remove),
+            new("DividerLight", "DividerLight", Icons.Material.Filled.Remove)
+        }
+    };
+
+    protected override void OnInitialized()
+    {
+        // Subscribe to state changes for real-time updates per your requirements
+        ThemeState.StateChanged += OnStateChanged;
+    }
+
+    private void OnStateChanged(object? sender, EventArgs e)
+    {
+        // Force UI refresh when theme changes from other sources
+        InvokeAsync(StateHasChanged);
+    }
+
+    private string GetColorValue(string propertyName)
+    {
+        // Get dark palette values (isDarkMode = true)
+        return ThemeService.GetPalettePropertyValue(ThemeState.Value.CurrentTheme, propertyName, true);
+    }
+
+    private void UpdateColor(string propertyName, string value)
+    {
+        // Your specified data flow: UpdateColor → ReduceUpdateTheme → MudThemeProvider
+        
+        // 1. Clone current theme
+        var theme = ThemeService.CloneTheme(ThemeState.Value.CurrentTheme);
+        
+        // 2. Update the dark palette property
+        ThemeService.UpdatePaletteProperty(theme, propertyName, value, true);
+        
+        // 3. Dispatch to ReduceUpdateTheme
+        Dispatcher.Dispatch(new UpdateThemeAction(theme));
+        
+        // 4. Force immediate local UI update
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        // Clean up state subscription
+        ThemeState.StateChanged -= OnStateChanged;
+    }
+
+    private record ColorProperty(string PropertyName, string DisplayName, string Icon);
+}

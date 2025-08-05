@@ -1,0 +1,72 @@
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudText Typo="Typo.h6">User Information Form</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                This form demonstrates how various input components look within your custom dialog theme.
+            </MudText>
+            
+            <MudTextField @bind-Value="_name"
+                          Label="Full Name"
+                          Variant="Variant.Outlined"
+                          Required="true"
+                          HelperText="Enter your full name" />
+            
+            <MudTextField @bind-Value="_email"
+                          Label="Email Address"
+                          Variant="Variant.Outlined"
+                          Required="true"
+                          HelperText="We'll never share your email" />
+            
+            <MudSelect @bind-Value="_department" 
+                       Label="Department" 
+                       Variant="Variant.Outlined">
+                <MudSelectItem Value="@("Engineering")">Engineering</MudSelectItem>
+                <MudSelectItem Value="@("Design")">Design</MudSelectItem>
+                <MudSelectItem Value="@("Marketing")">Marketing</MudSelectItem>
+                <MudSelectItem Value="@("Sales")">Sales</MudSelectItem>
+            </MudSelect>
+            
+            <MudCheckBox @bind-Value="_agreeToTerms" 
+                         Label="I agree to the terms and conditions" 
+                         Color="Color.Primary" />
+            
+            <MudSlider @bind-Value="_experience"
+                       Min="0"
+                       Max="20"
+                       Step="1"
+                       Color="Color.Primary">
+                Years of Experience: @_experience
+            </MudSlider>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" 
+                   Variant="Variant.Filled" 
+                   OnClick="Submit"
+                   Disabled="@(!IsFormValid())">
+            Submit
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+
+    private string _name = "";
+    private string _email = "";
+    private string _department = "";
+    private bool _agreeToTerms = false;
+    private double _experience = 5;
+
+    private bool IsFormValid()
+    {
+        return !string.IsNullOrWhiteSpace(_name) && 
+               !string.IsNullOrWhiteSpace(_email) && 
+               _agreeToTerms;
+    }
+
+    void Submit() => MudDialog.Close(DialogResult.Ok(_name));
+    void Cancel() => MudDialog.Cancel();
+}

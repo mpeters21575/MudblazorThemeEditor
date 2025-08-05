@@ -1,0 +1,553 @@
+@page "/shadows"
+@using MudBlazor.Utilities
+@using MudBlazorThemeEditor.Components
+@using Fluxor
+@using MudBlazorThemeEditor.Services
+@using MudBlazorThemeEditor.Store
+@using Microsoft.JSInterop
+@inject IState<ThemeState> ThemeState
+@inject IDispatcher Dispatcher
+@inject IThemeService ThemeService
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+<MudGrid>
+    <MudItem xs="12">
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudText Typo="Typo.h4" Color="Color.Primary">
+                <MudIcon Icon="@Icons.Material.Filled.Layers" Class="mr-2" />
+                Shadows & Elevation
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mt-2">
+                Customize shadow properties for each elevation level. Changes are applied in real-time throughout the application.
+            </MudText>
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-4">
+                Elevation Level
+            </MudText>
+            
+            <MudSelect T="int" @bind-Value="@_selectedElevation" Label="Elevation Level" Variant="Variant.Outlined">
+                @for (int i = 0; i < 26; i++)
+                {
+                    var elevation = i;
+                    <MudSelectItem Value="@elevation">Elevation @elevation</MudSelectItem>
+                }
+            </MudSelect>
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-4">
+                Shadow Preview
+            </MudText>
+            
+            <MudStack Spacing="3">
+                <MudText Typo="Typo.subtitle2">Current Shadow Value:</MudText>
+                <MudTextField Value="@GetCurrentShadowValue()"
+                              ReadOnly="true"
+                              Variant="Variant.Outlined"
+                              Lines="2"
+                              HelperText="This shadow is applied to all components with this elevation" />
+                
+                <!-- Live preview using your theme's shadow -->
+                <MudPaper Class="pa-3" Elevation="@_selectedElevation">
+                    <MudText Typo="Typo.body1">Live Preview</MudText>
+                    <MudText Typo="Typo.caption">Elevation @_selectedElevation</MudText>
+                </MudPaper>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-4">
+                Shadow Properties
+            </MudText>
+            
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <SliderWithLabel Label="Offset X"
+                                     Value="@_offsetX"
+                                     ValueChanged="@OnOffsetXChanged"
+                                     Min="-20"
+                                     Max="20"
+                                     Step="1"
+                                     DecimalPlaces="0"
+                                     Unit="px"
+                                     Icon="@Icons.Material.Filled.SwapHoriz"
+                                     HelperText="Horizontal shadow offset" />
+                </MudItem>
+                
+                <MudItem xs="12" sm="6">
+                    <SliderWithLabel Label="Offset Y"
+                                     Value="@_offsetY"
+                                     ValueChanged="@OnOffsetYChanged"
+                                     Min="-20"
+                                     Max="20"
+                                     Step="1"
+                                     DecimalPlaces="0"
+                                     Unit="px"
+                                     Icon="@Icons.Material.Filled.SwapVert"
+                                     HelperText="Vertical shadow offset" />
+                </MudItem>
+                
+                <MudItem xs="12" sm="6">
+                    <SliderWithLabel Label="Blur Radius"
+                                     Value="@_blurRadius"
+                                     ValueChanged="@OnBlurRadiusChanged"
+                                     Min="0"
+                                     Max="40"
+                                     Step="1"
+                                     DecimalPlaces="0"
+                                     Unit="px"
+                                     Icon="@Icons.Material.Filled.BlurOn"
+                                     HelperText="Shadow blur amount" />
+                </MudItem>
+                
+                <MudItem xs="12" sm="6">
+                    <SliderWithLabel Label="Spread Radius"
+                                     Value="@_spreadRadius"
+                                     ValueChanged="@OnSpreadRadiusChanged"
+                                     Min="0"
+                                     Max="20"
+                                     Step="1"
+                                     DecimalPlaces="0"
+                                     Unit="px"
+                                     Icon="@Icons.Material.Filled.OpenInFull"
+                                     HelperText="Shadow spread size" />
+                </MudItem>
+                
+                <MudItem xs="12" sm="6">
+                    <SliderWithLabel Label="Opacity"
+                                     Value="@_opacity"
+                                     ValueChanged="@OnOpacityChanged"
+                                     Min="0"
+                                     Max="1"
+                                     Step="0.05"
+                                     DecimalPlaces="2"
+                                     Icon="@Icons.Material.Filled.Opacity"
+                                     HelperText="Shadow transparency" />
+                </MudItem>
+                
+                <MudItem xs="12" sm="6">
+                    <MudStack Spacing="1">
+                        <MudText Typo="Typo.body2">Shadow Color</MudText>
+                        <MudColorPicker @bind-Value="@_shadowColor"
+                                        Label="Color"
+                                        Variant="Variant.Outlined"
+                                        ShowAlpha
+                                        ColorPickerView="ColorPickerView.Spectrum"
+                                        ColorPickerMode="ColorPickerMode.HEX"
+                                        ShowInputs="true"
+                                        Style="max-width: 200px;" />
+                    </MudStack>
+                </MudItem>
+            </MudGrid>
+            
+            <MudDivider Class="my-4" />
+            
+            <MudStack Spacing="2">
+                <MudText Typo="Typo.body2">Generated CSS Shadow:</MudText>
+                <MudTextField T="string"
+                              Value="@_generatedShadow"
+                              ValueChanged="@OnGeneratedShadowChanged"
+                              Label="Box Shadow Value"
+                              Variant="Variant.Outlined"
+                              Lines="2"
+                              HelperText="You can also edit this directly" />
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+    
+    <!-- Live demonstration grid -->
+    <MudItem xs="12">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-4">
+                Live Component Demonstration
+            </MudText>
+            
+            <MudAlert Severity="Severity.Info" Class="mb-3">
+                <strong>Important:</strong> Each component has a fixed elevation level. 
+                For example, AppBar uses elevation 4, so changes to elevation @_selectedElevation won't affect the AppBar.
+                Change to elevation 4 to see AppBar shadow changes.
+            </MudAlert>
+            
+            <MudStack Spacing="3">
+                <MudText Typo="Typo.body2">
+                    <strong>Component Elevation Reference:</strong>
+                </MudText>
+                <MudSimpleTable Dense="true">
+                    <thead>
+                        <tr>
+                            <th>Component</th>
+                            <th>Default Elevation</th>
+                            <th>Will Change When You Edit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>AppBar</td>
+                            <td>4</td>
+                            <td>@(4 == _selectedElevation ? "✅ YES" : "❌ No (select elevation 4)")</td>
+                        </tr>
+                        <tr>
+                            <td>Drawer</td>
+                            <td>1</td>
+                            <td>@(1 == _selectedElevation ? "✅ YES" : "❌ No (select elevation 1)")</td>
+                        </tr>
+                        <tr>
+                            <td>Cards (default)</td>
+                            <td>1</td>
+                            <td>@(1 == _selectedElevation ? "✅ YES" : "❌ No (select elevation 1)")</td>
+                        </tr>
+                        <tr>
+                            <td>This Paper</td>
+                            <td>1</td>
+                            <td>@(1 == _selectedElevation ? "✅ YES" : "❌ No (select elevation 1)")</td>
+                        </tr>
+                        <tr>
+                            <td>Selected Test Component</td>
+                            <td>@_selectedElevation</td>
+                            <td>✅ YES (this will always change)</td>
+                        </tr>
+                    </tbody>
+                </MudSimpleTable>
+            </MudStack>
+            
+            <MudDivider Class="my-4" />
+            
+            <MudText Typo="Typo.body2" Class="mb-3">
+                <strong>Test Components at Different Elevations:</strong>
+            </MudText>
+            
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudText Typo="Typo.subtitle2">Fixed Elevations (won't change unless you edit their specific level):</MudText>
+                    <MudStack Spacing="2" Class="mt-2">
+                        <MudCard Elevation="1">
+                            <MudCardContent>
+                                <MudText Typo="Typo.body2"><strong>Card (Elevation 1)</strong></MudText>
+                                <MudText Typo="Typo.caption">Changes when you edit elevation 1</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                        
+                        <MudPaper Class="pa-2" Elevation="2">
+                            <MudText Typo="Typo.body2"><strong>Paper (Elevation 2)</strong></MudText>
+                            <MudText Typo="Typo.caption">Changes when you edit elevation 2</MudText>
+                        </MudPaper>
+                        
+                        <MudAlert Severity="Severity.Info" Elevation="3">
+                            <strong>Alert (Elevation 3)</strong><br/>
+                            Changes when you edit elevation 3
+                        </MudAlert>
+                    </MudStack>
+                </MudItem>
+                
+                <MudItem xs="12" md="6">
+                    <MudText Typo="Typo.subtitle2">Dynamic Test Component (always matches your selection):</MudText>
+                    <MudStack Spacing="2" Class="mt-2">
+                        <MudPaper Class="pa-3" Elevation="@_selectedElevation" Style="border: 2px dashed #2ECC71; background: rgba(46,204,113,0.1);">
+                            <MudText Typo="Typo.h6" Color="Color.Primary">
+                                <MudIcon Icon="@Icons.Material.Filled.Settings" Class="mr-1" />
+                                Live Test Component
+                            </MudText>
+                            <MudText Typo="Typo.body1"><strong>Current Elevation: @_selectedElevation</strong></MudText>
+                            <MudText Typo="Typo.body2">This component's shadow will change as you adjust the sliders above.</MudText>
+                            <MudText Typo="Typo.caption">Shadow: @GetCurrentShadowValue()</MudText>
+                        </MudPaper>
+                        
+                        <!-- Quick elevation selector buttons -->
+                        <MudStack Row="true" Wrap="Wrap.Wrap">
+                            <MudText Typo="Typo.caption" Class="align-self-center mr-2">Quick select:</MudText>
+                            @foreach (var elev in new[] { 1, 2, 3, 4, 5, 8 })
+                            {
+                                <MudButton Size="Size.Small" 
+                                           Color="@(elev == _selectedElevation ? Color.Primary : Color.Default)"
+                                           Variant="@(elev == _selectedElevation ? Variant.Filled : Variant.Outlined)"
+                                           OnClick="@(() => ChangeElevation(elev))">
+                                    E@elev
+                                </MudButton>
+                            }
+                        </MudStack>
+                    </MudStack>
+                </MudItem>
+            </MudGrid>
+            
+            <MudExpansionPanels Class="mt-4">
+                <MudExpansionPanel Text="📚 How Elevation Works in MudBlazor">
+                    <MudText Typo="Typo.body2">
+                        Each MudBlazor component has a <strong>fixed elevation level</strong>:
+                    </MudText>
+                    <ul>
+                        <li><strong>AppBar:</strong> Always uses elevation 4</li>
+                        <li><strong>Drawer:</strong> Always uses elevation 1</li>
+                        <li><strong>Cards:</strong> Default to elevation 1 (but can be changed via Elevation property)</li>
+                        <li><strong>Papers:</strong> Default to elevation 1 (but can be changed via Elevation property)</li>
+                    </ul>
+                    <MudText Typo="Typo.body2" Class="mt-2">
+                        To see AppBar shadow changes, select <strong>Elevation 4</strong> in the dropdown above and adjust the shadow properties.
+                        The entire application's AppBar will reflect your changes immediately!
+                    </MudText>
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private int _selectedElevation = 1;
+    private double _offsetX = 0;
+    private double _offsetY = 2;
+    private double _blurRadius = 4;
+    private double _spreadRadius = 0;
+    private double _opacity = 0.2;
+    private MudColor _shadowColor = new("#000000");
+    private string _generatedShadow = "none";
+    private bool _isUpdating = false;
+    private string _lastLoadedShadow = "";
+
+    protected override void OnInitialized()
+    {
+        ThemeState.StateChanged += OnThemeStateChanged;
+        LoadCurrentShadow();
+    }
+
+    private void OnThemeStateChanged(object? sender, EventArgs e)
+    {
+        if (!_isUpdating)
+        {
+            InvokeAsync(() =>
+            {
+                LoadCurrentShadow();
+                StateHasChanged();
+            });
+        }
+    }
+    
+    private void ChangeElevation(int newElevation)
+    {
+        _selectedElevation = newElevation;
+        LoadCurrentShadow();
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        ThemeState.StateChanged -= OnThemeStateChanged;
+    }
+
+    private void LoadCurrentShadow()
+    {
+        try
+        {
+            var currentTheme = ThemeState.Value.CurrentTheme;
+            if (currentTheme?.Shadows?.Elevation != null && 
+                _selectedElevation < currentTheme.Shadows.Elevation.Length)
+            {
+                var shadowValue = currentTheme.Shadows.Elevation[_selectedElevation];
+                
+                if (_lastLoadedShadow != shadowValue)
+                {
+                    _lastLoadedShadow = shadowValue;
+                    ParseShadowValue(shadowValue);
+                }
+            }
+        }
+        catch
+        {
+            ResetToDefaults();
+        }
+    }
+
+    private void ParseShadowValue(string shadowValue)
+    {
+        if (string.IsNullOrEmpty(shadowValue) || shadowValue.Trim() == "none")
+        {
+            ResetToDefaults();
+            return;
+        }
+
+        try
+        {
+            var trimmed = shadowValue.Trim();
+            
+            // Extract rgba color
+            var rgbaMatch = System.Text.RegularExpressions.Regex.Match(trimmed, @"rgba?\(([^)]+)\)");
+            if (rgbaMatch.Success)
+            {
+                var rgbaContent = rgbaMatch.Groups[1].Value;
+                var rgbaParts = rgbaContent.Split(',').Select(p => p.Trim()).ToArray();
+                
+                if (rgbaParts.Length >= 3)
+                {
+                    if (int.TryParse(rgbaParts[0], out var r) &&
+                        int.TryParse(rgbaParts[1], out var g) &&
+                        int.TryParse(rgbaParts[2], out var b))
+                    {
+                        _shadowColor = new MudColor(r, g, b, 255);
+                        
+                        if (rgbaParts.Length >= 4 && double.TryParse(rgbaParts[3], out var alpha))
+                        {
+                            _opacity = alpha;
+                        }
+                    }
+                }
+                
+                // Remove rgba part to parse the rest
+                trimmed = trimmed.Replace(rgbaMatch.Value, "").Trim();
+            }
+            
+            // Parse the remaining parts (offsets, blur, spread)
+            var parts = trimmed.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            
+            if (parts.Length >= 3)
+            {
+                _offsetX = ParsePixelValue(parts[0]);
+                _offsetY = ParsePixelValue(parts[1]);
+                _blurRadius = ParsePixelValue(parts[2]);
+                
+                if (parts.Length >= 4)
+                {
+                    _spreadRadius = ParsePixelValue(parts[3]);
+                }
+            }
+        }
+        catch
+        {
+            ResetToDefaults();
+        }
+        
+        UpdateGeneratedShadowString();
+    }
+
+    private double ParsePixelValue(string value)
+    {
+        if (string.IsNullOrEmpty(value)) return 0;
+        
+        var numValue = value.Replace("px", "").Replace("rem", "").Trim();
+        return double.TryParse(numValue, out var result) ? result : 0;
+    }
+
+    private void ResetToDefaults()
+    {
+        _offsetX = 0;
+        _offsetY = Math.Max(1, _selectedElevation);
+        _blurRadius = Math.Max(2, _selectedElevation * 2);
+        _spreadRadius = 0;
+        _opacity = 0.2;
+        _shadowColor = new MudColor("#000000");
+        UpdateGeneratedShadowString();
+    }
+
+    private void UpdateGeneratedShadowString()
+    {
+        if (_blurRadius == 0 && _spreadRadius == 0 && _opacity == 0)
+        {
+            _generatedShadow = "none";
+        }
+        else
+        {
+            var spreadStr = _spreadRadius > 0 ? $" {_spreadRadius}px" : "";
+            _generatedShadow = $"{_offsetX}px {_offsetY}px {_blurRadius}px{spreadStr} rgba({_shadowColor.R},{_shadowColor.G},{_shadowColor.B},{_opacity:F2})";
+        }
+    }
+
+    private void UpdateTheme()
+    {
+        if (_isUpdating) return;
+
+        _isUpdating = true;
+        try
+        {
+            UpdateGeneratedShadowString();
+            
+            var theme = ThemeService.CloneTheme(ThemeState.Value.CurrentTheme);
+            if (theme.Shadows?.Elevation != null && _selectedElevation < theme.Shadows.Elevation.Length)
+            {
+                Console.WriteLine($"Updating shadow for elevation {_selectedElevation}: {_generatedShadow}");
+                Console.WriteLine($"Theme has {theme.Shadows.Elevation.Length} elevation levels");
+                Console.WriteLine($"Current elevation {_selectedElevation} value before update: {theme.Shadows.Elevation[_selectedElevation]}");
+                
+                // CRITICAL FIX: Update both the cloned theme AND the saved themes
+                theme.Shadows.Elevation[_selectedElevation] = _generatedShadow;
+                _lastLoadedShadow = _generatedShadow;
+                
+                Console.WriteLine($"Current elevation {_selectedElevation} value after update: {theme.Shadows.Elevation[_selectedElevation]}");
+                Console.WriteLine($"Dispatching UpdateThemeAction with updated shadow");
+                
+                // Dispatch the theme update - this will trigger App.razor to regenerate the theme key
+                Dispatcher.Dispatch(new UpdateThemeAction(theme));
+            }
+            else
+            {
+                Console.WriteLine($"PROBLEM: Cannot update shadow - elevation {_selectedElevation}, shadows array length: {theme.Shadows?.Elevation?.Length}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating theme: {ex.Message}");
+        }
+        finally
+        {
+            _isUpdating = false;
+        }
+    }
+
+    private string GetCurrentShadowValue()
+    {
+        try
+        {
+            var currentTheme = ThemeState.Value.CurrentTheme;
+            if (currentTheme?.Shadows?.Elevation != null && 
+                _selectedElevation < currentTheme.Shadows.Elevation.Length)
+            {
+                return currentTheme.Shadows.Elevation[_selectedElevation];
+            }
+        }
+        catch { }
+        
+        return "none";
+    }
+
+    // Event handlers for individual property changes
+    private void OnOffsetXChanged(double newValue)
+    {
+        _offsetX = newValue;
+        UpdateTheme();
+    }
+
+    private void OnOffsetYChanged(double newValue)
+    {
+        _offsetY = newValue;
+        UpdateTheme();
+    }
+
+    private void OnBlurRadiusChanged(double newValue)
+    {
+        _blurRadius = newValue;
+        UpdateTheme();
+    }
+
+    private void OnSpreadRadiusChanged(double newValue)
+    {
+        _spreadRadius = newValue;
+        UpdateTheme();
+    }
+
+    private void OnOpacityChanged(double newValue)
+    {
+        _opacity = newValue;
+        UpdateTheme();
+    }
+
+    private void OnGeneratedShadowChanged(string newValue)
+    {
+        _generatedShadow = newValue;
+        UpdateTheme();
+    }
+}

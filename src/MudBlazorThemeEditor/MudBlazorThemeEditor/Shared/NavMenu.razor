@@ -1,0 +1,55 @@
+@inject ILocalizationService Localization
+
+<MudNavMenu>
+    <MudText Typo="Typo.h6" Class="px-4 py-2">@Localization.GetString("navigation")</MudText>
+    
+    <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home" IconColor="Color.Primary">
+        @Localization.GetString("home")
+    </MudNavLink>
+    
+    <MudNavGroup Title="@Localization.GetString("colors")" 
+                 Icon="@Icons.Material.Filled.Palette" 
+                 IconColor="Color.Primary"
+                 Expanded="true">
+        <MudNavLink Href="/colors/light" Icon="@Icons.Material.Filled.LightMode" IconColor="Color.Primary">
+            @Localization.GetString("light_mode_palette")
+        </MudNavLink>
+        <MudNavLink Href="/colors/dark" Icon="@Icons.Material.Filled.DarkMode" IconColor="Color.Primary">
+            @Localization.GetString("dark_mode_palette")
+        </MudNavLink>
+    </MudNavGroup>
+    
+    <MudNavLink Href="/typography" Icon="@Icons.Material.Filled.TextFields" IconColor="Color.Primary">
+        @Localization.GetString("typography")
+    </MudNavLink>
+    
+    <MudNavLink Href="/layout" Icon="@Icons.Material.Filled.Dashboard" IconColor="Color.Primary">
+        @Localization.GetString("layout")
+    </MudNavLink>
+    
+    <MudNavLink Href="/shadows" Icon="@Icons.Material.Filled.Layers" IconColor="Color.Primary">
+        @Localization.GetString("shadows")
+    </MudNavLink>
+    
+    <MudNavLink Href="/dialogs" Icon="@Icons.Material.Filled.OpenInNew" IconColor="Color.Primary">
+        Dialogs & Modals
+    </MudNavLink>
+    
+    <MudNavLink Href="/zindex" Icon="@Icons.Material.Filled.ViewInAr" IconColor="Color.Primary">
+        Z-Index & Layers
+    </MudNavLink>
+    
+    <MudDivider Class="my-2" />
+    
+    <MudNavGroup Title="@Localization.GetString("theme_management")" 
+                 Icon="@Icons.Material.Filled.Settings" 
+                 IconColor="Color.Primary"
+                 Expanded="false">
+        <MudNavLink Href="/themes" Icon="@Icons.Material.Filled.Save" IconColor="Color.Primary">
+            @Localization.GetString("saved_themes")
+        </MudNavLink>
+        <MudNavLink Href="/import-export" Icon="@Icons.Material.Filled.ImportExport" IconColor="Color.Primary">
+            @Localization.GetString("import_export_themes")
+        </MudNavLink>
+    </MudNavGroup>
+</MudNavMenu>

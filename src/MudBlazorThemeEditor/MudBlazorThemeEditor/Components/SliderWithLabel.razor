@@ -1,0 +1,70 @@
+@using MudBlazor
+
+<MudStack Spacing="1">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+        @if (!string.IsNullOrEmpty(Icon))
+        {
+            <MudIcon Icon="@Icon" Color="Color.Primary" Size="Size.Small" />
+        }
+        <MudText Typo="Typo.body2">@Label</MudText>
+        <MudSpacer />
+        <MudText Typo="Typo.caption" Color="Color.Secondary">
+            @DisplayValue@Unit
+        </MudText>
+    </MudStack>
+    
+    <MudSlider T="double"
+               Value="@InternalValue"
+               ValueChanged="@OnSliderValueChanged"
+               Min="@Min"
+               Max="@Max"
+               Step="@Step"
+               Color="Color.Primary"
+               Variant="Variant.Filled"
+               Immediate="true" />
+    
+    @if (!string.IsNullOrEmpty(HelperText))
+    {
+        <MudText Typo="Typo.caption" Color="Color.Secondary">
+            @HelperText
+        </MudText>
+    }
+</MudStack>
+
+@code {
+    [Parameter] public string Label { get; set; } = "";
+    [Parameter] public double Value { get; set; }
+    [Parameter] public EventCallback<double> ValueChanged { get; set; }
+    [Parameter] public double Min { get; set; } = 0;
+    [Parameter] public double Max { get; set; } = 100;
+    [Parameter] public double Step { get; set; } = 1;
+    [Parameter] public string Unit { get; set; } = "";
+    [Parameter] public string Icon { get; set; } = "";
+    [Parameter] public string HelperText { get; set; } = "";
+    [Parameter] public int DecimalPlaces { get; set; } = 2;
+
+    private double InternalValue
+    {
+        get => Value;
+        set => OnSliderValueChanged(value);
+    }
+
+    private string DisplayValue
+    {
+        get
+        {
+            if (DecimalPlaces == 0)
+                return Math.Round(Value).ToString("F0");
+            
+            return Value.ToString($"F{DecimalPlaces}");
+        }
+    }
+
+    private async Task OnSliderValueChanged(double newValue)
+    {
+        if (Math.Abs(Value - newValue) > double.Epsilon) // Only update if value actually changed
+        {
+            await ValueChanged.InvokeAsync(newValue);
+        }
+    }
+}

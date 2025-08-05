@@ -1,0 +1,31 @@
+@using Microsoft.AspNetCore.Components
+@using MudBlazor
+<MudDialog>
+    <DialogContent>
+        <MudText>
+            @if (ThemeExists)
+            {
+                <span>A theme with the name "@ThemeName" already exists. Do you want to overwrite it?</span>
+            }
+            else
+            {
+                <span>Save the current theme as "@ThemeName"?</span>
+            }
+        </MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">
+            @(ThemeExists ? "Overwrite" : "Save")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public string ThemeName { get; set; } = "";
+    [Parameter] public bool ThemeExists { get; set; }
+
+    void Submit() => MudDialog.Close(DialogResult.Ok(true));
+    void Cancel() => MudDialog.Cancel();
+}

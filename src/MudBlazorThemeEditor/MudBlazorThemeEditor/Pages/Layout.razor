@@ -1,0 +1,303 @@
+@page "/layout"
+@using Fluxor
+@using MudBlazor
+@using MudBlazorThemeEditor.Services
+@using MudBlazorThemeEditor.Store
+@using MudBlazorThemeEditor.Components
+@inject IState<ThemeState> ThemeState
+@inject IDispatcher Dispatcher
+@inject IThemeService ThemeService
+@inject ILocalizationService Localization
+
+<MudGrid>
+    <MudItem xs="12">
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudText Typo="Typo.h4" Color="Color.Primary">
+                <MudIcon Icon="@Icons.Material.Filled.Dashboard" Class="mr-2" />
+                @Localization.GetString("layout")
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mt-2">
+                Customize layout properties. Changes are applied in real-time throughout the application.
+            </MudText>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-4">
+                Border & Spacing
+            </MudText>
+            
+            <MudStack Spacing="3">
+                <SliderWithLabel Label="Default Border Radius"
+                                 Value="@GetBorderRadiusValue()"
+                                 ValueChanged="@(value => UpdateBorderRadius(value))"
+                                 Min="0"
+                                 Max="20"
+                                 Step="0.5"
+                                 DecimalPlaces="1"
+                                 Unit="px"
+                                 Icon="@Icons.Material.Filled.RoundedCorner"
+                                 HelperText="Border radius for buttons, cards, and inputs" />
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-4">
+                AppBar Settings
+            </MudText>
+            
+            <MudStack Spacing="3">
+                <SliderWithLabel Label="AppBar Height"
+                                 Value="@GetAppBarHeightValue()"
+                                 ValueChanged="@(value => UpdateAppBarHeight(value))"
+                                 Min="48"
+                                 Max="80"
+                                 Step="4"
+                                 DecimalPlaces="0"
+                                 Unit="px"
+                                 Icon="@Icons.Material.Filled.ViewAgenda"
+                                 HelperText="Height of the top navigation bar" />
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-4">
+                Drawer Settings
+            </MudText>
+            
+            <MudStack Spacing="3">
+                <SliderWithLabel Label="Drawer Width (Left)"
+                                 Value="@GetDrawerWidthLeftValue()"
+                                 ValueChanged="@(value => UpdateDrawerWidthLeft(value))"
+                                 Min="200"
+                                 Max="400"
+                                 Step="10"
+                                 DecimalPlaces="0"
+                                 Unit="px"
+                                 Icon="@Icons.Material.Filled.Menu"
+                                 HelperText="Width of the left navigation drawer" />
+                
+                <SliderWithLabel Label="Drawer Width (Right)"
+                                 Value="@GetDrawerWidthRightValue()"
+                                 ValueChanged="@(value => UpdateDrawerWidthRight(value))"
+                                 Min="200"
+                                 Max="500"
+                                 Step="10"
+                                 DecimalPlaces="0"
+                                 Unit="px"
+                                 Icon="@Icons.Material.Filled.MenuOpen"
+                                 HelperText="Width of the right navigation drawer" />
+                
+                <SliderWithLabel Label="Mini Drawer Width (Left)"
+                                 Value="@GetDrawerMiniWidthLeftValue()"
+                                 ValueChanged="@(value => UpdateDrawerMiniWidthLeft(value))"
+                                 Min="40"
+                                 Max="80"
+                                 Step="4"
+                                 DecimalPlaces="0"
+                                 Unit="px"
+                                 Icon="@Icons.Material.Filled.ViewSidebar"
+                                 HelperText="Width when drawer is collapsed" />
+                
+                <SliderWithLabel Label="Mini Drawer Width (Right)"
+                                 Value="@GetDrawerMiniWidthRightValue()"
+                                 ValueChanged="@(value => UpdateDrawerMiniWidthRight(value))"
+                                 Min="40"
+                                 Max="80"
+                                 Step="4"
+                                 DecimalPlaces="0"
+                                 Unit="px"
+                                 Icon="@Icons.Material.Filled.ViewSidebar"
+                                 HelperText="Width when right drawer is collapsed" />
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12" md="6">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-4">
+                Layout Preview
+            </MudText>
+            
+            <MudStack Spacing="3">
+                <MudAlert Severity="Severity.Info">
+                    Border radius: @GetLayoutValue("DefaultBorderRadius")
+                </MudAlert>
+                
+                <MudButton Variant="Variant.Filled" Color="Color.Primary">
+                    Sample Button (with current radius)
+                </MudButton>
+                
+                <MudTextField T="string" Label="Sample Input" Variant="Variant.Outlined" />
+                
+                <MudPaper Class="pa-3" Elevation="2">
+                    <MudText>Sample Card/Paper Component</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        This card uses the current border radius setting
+                    </MudText>
+                </MudPaper>
+                
+                <MudCard Elevation="3">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Sample Card</MudText>
+                        <MudText Typo="Typo.body2">
+                            Cards, buttons, and inputs will all use the border radius you set above.
+                        </MudText>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Size="Size.Small" Color="Color.Primary">Action</MudButton>
+                        <MudButton Size="Size.Small" Color="Color.Secondary">Cancel</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private string GetLayoutValue(string propertyName)
+    {
+        return ThemeService.GetLayoutPropertyValue(ThemeState.Value.CurrentTheme, propertyName);
+    }
+
+    private double GetBorderRadiusValue()
+    {
+        try
+        {
+            var value = GetLayoutValue("DefaultBorderRadius");
+            // Parse rem or px values
+            if (value.EndsWith("rem"))
+            {
+                var numValue = value.Replace("rem", "").Replace(".", ",");
+                return double.TryParse(numValue, out var result) ? result * 16 : 5; // Convert rem to px
+            }
+            if (value.EndsWith("px"))
+            {
+                var numValue = value.Replace("px", "");
+                return double.TryParse(numValue, out var result) ? result : 5;
+            }
+            return 5;
+        }
+        catch
+        {
+            return 5;
+        }
+    }
+
+    private double GetAppBarHeightValue()
+    {
+        try
+        {
+            var value = GetLayoutValue("AppbarHeight");
+            var numValue = value.Replace("px", "");
+            return double.TryParse(numValue, out var result) ? result : 64;
+        }
+        catch
+        {
+            return 64;
+        }
+    }
+
+    private double GetDrawerWidthLeftValue()
+    {
+        try
+        {
+            var value = GetLayoutValue("DrawerWidthLeft");
+            var numValue = value.Replace("px", "");
+            return double.TryParse(numValue, out var result) ? result : 280;
+        }
+        catch
+        {
+            return 280;
+        }
+    }
+
+    private double GetDrawerWidthRightValue()
+    {
+        try
+        {
+            var value = GetLayoutValue("DrawerWidthRight");
+            var numValue = value.Replace("px", "");
+            return double.TryParse(numValue, out var result) ? result : 320;
+        }
+        catch
+        {
+            return 320;
+        }
+    }
+
+    private double GetDrawerMiniWidthLeftValue()
+    {
+        try
+        {
+            var value = GetLayoutValue("DrawerMiniWidthLeft");
+            var numValue = value.Replace("px", "");
+            return double.TryParse(numValue, out var result) ? result : 56;
+        }
+        catch
+        {
+            return 56;
+        }
+    }
+
+    private double GetDrawerMiniWidthRightValue()
+    {
+        try
+        {
+            var value = GetLayoutValue("DrawerMiniWidthRight");
+            var numValue = value.Replace("px", "");
+            return double.TryParse(numValue, out var result) ? result : 56;
+        }
+        catch
+        {
+            return 56;
+        }
+    }
+
+    private void UpdateBorderRadius(double value)
+    {
+        var theme = ThemeService.CloneTheme(ThemeState.Value.CurrentTheme);
+        theme.LayoutProperties.DefaultBorderRadius = $"{value}px";
+        Dispatcher.Dispatch(new UpdateThemeAction(theme));
+    }
+
+    private void UpdateAppBarHeight(double value)
+    {
+        var theme = ThemeService.CloneTheme(ThemeState.Value.CurrentTheme);
+        theme.LayoutProperties.AppbarHeight = $"{value}px";
+        Dispatcher.Dispatch(new UpdateThemeAction(theme));
+    }
+
+    private void UpdateDrawerWidthLeft(double value)
+    {
+        var theme = ThemeService.CloneTheme(ThemeState.Value.CurrentTheme);
+        theme.LayoutProperties.DrawerWidthLeft = $"{value}px";
+        Dispatcher.Dispatch(new UpdateThemeAction(theme));
+    }
+
+    private void UpdateDrawerWidthRight(double value)
+    {
+        var theme = ThemeService.CloneTheme(ThemeState.Value.CurrentTheme);
+        theme.LayoutProperties.DrawerWidthRight = $"{value}px";
+        Dispatcher.Dispatch(new UpdateThemeAction(theme));
+    }
+
+    private void UpdateDrawerMiniWidthLeft(double value)
+    {
+        var theme = ThemeService.CloneTheme(ThemeState.Value.CurrentTheme);
+        theme.LayoutProperties.DrawerMiniWidthLeft = $"{value}px";
+        Dispatcher.Dispatch(new UpdateThemeAction(theme));
+    }
+
+    private void UpdateDrawerMiniWidthRight(double value)
+    {
+        var theme = ThemeService.CloneTheme(ThemeState.Value.CurrentTheme);
+        theme.LayoutProperties.DrawerMiniWidthRight = $"{value}px";
+        Dispatcher.Dispatch(new UpdateThemeAction(theme));
+    }
+}

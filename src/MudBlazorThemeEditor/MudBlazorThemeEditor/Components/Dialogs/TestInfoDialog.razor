@@ -1,0 +1,40 @@
+@* TestInfoDialog.razor *@
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudAlert Severity="Severity.Info" Dense="true">
+                This is a test information dialog to preview your dialog styling.
+            </MudAlert>
+            
+            <MudText Typo="Typo.body1">
+                This dialog demonstrates how your custom theme affects dialog appearance:
+            </MudText>
+            
+            <MudList T="string" Dense="true">
+                <MudListItem Icon="@Icons.Material.Filled.Palette" Text="Background and surface colors" />
+                <MudListItem Icon="@Icons.Material.Filled.TextFields" Text="Text color and contrast" />
+                <MudListItem Icon="@Icons.Material.Filled.RoundedCorner" Text="Border radius and styling" />
+                <MudListItem Icon="@Icons.Material.Filled.Layers" Text="Shadow and elevation effects" />
+            </MudList>
+            
+            <MudTextField T="string"  Label="Sample Input" 
+                          Placeholder="Test input field styling"
+                          Variant="Variant.Outlined" />
+            
+            <MudCheckBox T="bool" Label="Sample checkbox in dialog" Color="Color.Primary" />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Close</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Submit">
+            Got It
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+
+    void Submit() => MudDialog.Close(DialogResult.Ok(true));
+    void Cancel() => MudDialog.Cancel();
+}

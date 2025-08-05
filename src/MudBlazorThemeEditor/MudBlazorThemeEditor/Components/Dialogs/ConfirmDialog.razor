@@ -1,0 +1,23 @@
+@using Microsoft.AspNetCore.Components
+@using MudBlazor
+<MudDialog>
+    <DialogContent>
+        <MudText>@ContentText</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="@Color" Variant="Variant.Filled" OnClick="Submit">
+            @ButtonText
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public string ContentText { get; set; } = "";
+    [Parameter] public string ButtonText { get; set; } = "OK";
+    [Parameter] public Color Color { get; set; } = Color.Primary;
+
+    void Submit() => MudDialog.Close(DialogResult.Ok(true));
+    void Cancel() => MudDialog.Cancel();
+}

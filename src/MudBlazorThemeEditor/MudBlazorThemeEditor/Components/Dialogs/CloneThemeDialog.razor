@@ -1,0 +1,29 @@
+@using Microsoft.AspNetCore.Components
+@using MudBlazor
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="_themeName"
+                      Label="New Theme Name"
+                      Variant="Variant.Outlined"
+                      HelperText="Enter a name for the cloned theme"
+                      Immediate="true" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" 
+                   Variant="Variant.Filled" 
+                   OnClick="Submit"
+                   Disabled="@string.IsNullOrWhiteSpace(_themeName)">
+            Clone
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    
+    private string _themeName = "";
+
+    void Submit() => MudDialog.Close(DialogResult.Ok(_themeName));
+    void Cancel() => MudDialog.Cancel();
+}

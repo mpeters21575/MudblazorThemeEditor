@@ -1,0 +1,182 @@
+@using MudBlazor.Utilities
+@using MudBlazorThemeEditor.Store
+@using Fluxor
+@inject IState<ThemeState> ThemeStateLocal
+@implements IAsyncDisposable
+
+<MudStack>
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+        @if (!string.IsNullOrEmpty(Icon))
+        {
+            <MudIcon Icon="@Icon" Color="Color.Primary" Size="Size.Small" />
+        }
+        <MudText Typo="Typo.body2">@Label</MudText>
+    </MudStack>
+    
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+        <MudColorPicker Label="@Label"
+                        Value="@_internalColor"
+                        ValueChanged="@OnValueChanged"
+                        Variant="Variant.Outlined"
+                        Palette="@_colorPalette"
+                        ShowAlpha="false"
+                        ShowModeSwitch="true"
+                        ShowPreview="false"
+                        ShowToolbar="false"
+                        ColorPickerView="ColorPickerView.Spectrum"
+                        ColorPickerMode="ColorPickerMode.HEX"
+                        ShowInputs="true"
+                        Elevation="1"
+                        Class="flex-1" />
+        
+        @if (ShowPreview)
+        {
+            <MudPaper Style="@($"background-color: {_internalColor}; width: 32px; height: 32px; border-radius: 4px;")" 
+                      Elevation="1" />
+        }
+    </MudStack>
+</MudStack>
+
+@code {
+    [Parameter] public string Label { get; set; } = "";
+    [Parameter] public string Text { get; set; } = "#000000";
+    [Parameter] public EventCallback<string> TextChanged { get; set; }
+    [Parameter] public bool ShowPreview { get; set; } = false;
+    [Parameter] public string Icon { get; set; } = "";
+
+    private MudColor _internalColor = new("#000000");
+    private string _lastExternalValue = "";
+    private bool _isInternalUpdate = false;
+    private CancellationTokenSource? _updateCancellationTokenSource;
+
+    // Cache the palette to avoid recreating it every render
+    private static readonly Lazy<List<MudColor>> _cachedColorPalette = new(GetThemeColorPalette);
+    private List<MudColor> _colorPalette => _cachedColorPalette.Value;
+
+    protected override void OnInitialized()
+    {
+        UpdateInternalColorFromText();
+        ThemeStateLocal.StateChanged += OnThemeStateChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Use string comparison to avoid unnecessary updates
+        if (!_isInternalUpdate && !string.Equals(_lastExternalValue, Text, StringComparison.Ordinal))
+        {
+            UpdateInternalColorFromText();
+        }
+        
+        _lastExternalValue = Text;
+    }
+
+    private void UpdateInternalColorFromText()
+    {
+        try
+        {
+            // Only update if the color actually changed
+            var newColor = new MudColor(Text);
+            if (!_internalColor.Equals(newColor))
+            {
+                _internalColor = newColor;
+            }
+        }
+        catch
+        {
+            // Fallback to black if invalid color
+            if (!_internalColor.Equals(new MudColor("#000000")))
+            {
+                _internalColor = new MudColor("#000000");
+            }
+        }
+    }
+
+    private async Task OnValueChanged(MudColor newColor)
+    {
+        if (newColor?.Equals(_internalColor) == true)
+            return;
+
+        // Cancel any pending updates
+        _updateCancellationTokenSource?.Cancel();
+        _updateCancellationTokenSource = new CancellationTokenSource();
+        var cancellationToken = _updateCancellationTokenSource.Token;
+
+        _internalColor = newColor;
+        _isInternalUpdate = true;
+        
+        try
+        {
+            var hexValue = newColor.ToString(MudColorOutputFormats.Hex);
+            
+            if (TextChanged.HasDelegate)
+            {
+                await TextChanged.InvokeAsync(hexValue);
+            }
+
+            // Debounce the internal update flag reset
+            await Task.Delay(100, cancellationToken);
+            _isInternalUpdate = false;
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected when cancelled
+        }
+        catch (Exception)
+        {
+            _isInternalUpdate = false;
+            throw;
+        }
+    }
+
+    private void OnThemeStateChanged(object? sender, EventArgs e)
+    {
+        if (!_isInternalUpdate)
+        {
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        ThemeStateLocal.StateChanged -= OnThemeStateChanged;
+        _updateCancellationTokenSource?.Cancel();
+        _updateCancellationTokenSource?.Dispose();
+    }
+
+    private static List<MudColor> GetThemeColorPalette()
+    {
+        var theme = CashableTheme.Theme;
+        var lightPalette = theme.PaletteLight;
+        var darkPalette = theme.PaletteDark;
+
+        var colors = new HashSet<MudColor>();
+        
+        // Add colors from both palettes using the base Palette type
+        AddPaletteColors(colors, lightPalette);
+        AddPaletteColors(colors, (Palette)darkPalette);
+
+        return colors.ToList();
+    }
+
+    private static void AddPaletteColors(HashSet<MudColor> colors, Palette palette)
+    {
+        // Palette properties are already MudColor objects, just add them directly
+        colors.Add(palette.Primary);
+        colors.Add(palette.Secondary);
+        colors.Add(palette.Tertiary);
+        colors.Add(palette.Success);
+        colors.Add(palette.Info);
+        colors.Add(palette.Warning);
+        colors.Add(palette.Error);
+        colors.Add(palette.Background);
+        colors.Add(palette.Surface);
+        colors.Add(palette.AppbarBackground);
+        colors.Add(palette.TextPrimary);
+        colors.Add(palette.TextSecondary);
+        colors.Add(palette.Black);
+        colors.Add(palette.White);
+        colors.Add(palette.GrayDefault);
+        colors.Add(palette.GrayLight);
+        colors.Add(palette.GrayDark);
+    }
+}

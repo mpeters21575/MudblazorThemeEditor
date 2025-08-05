@@ -1,0 +1,299 @@
+@page "/typography"
+@using Fluxor
+@using MudBlazor
+@using MudBlazorThemeEditor.Services
+@using MudBlazorThemeEditor.Store
+@using MudBlazorThemeEditor.Components
+@inject IState<ThemeState> ThemeState
+@inject IDispatcher Dispatcher
+@inject IThemeService ThemeService
+@inject ILocalizationService Localization
+
+<MudGrid>
+    <MudItem xs="12">
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudText Typo="Typo.h4" Color="Color.Primary">
+                <MudIcon Icon="@Icons.Material.Filled.TextFields" Class="mr-2" />
+                @Localization.GetString("typography")
+            </MudText>
+            <MudText Typo="Typo.body2" Class="mt-2">
+                Customize typography settings. Changes are applied in real-time.
+            </MudText>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12" lg="8">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-4">
+                Default Typography Settings
+            </MudText>
+            
+            <MudGrid>
+                <MudItem xs="12">
+                    <FontFamilySelector Label="Font Family"
+                                        Value="@GetCurrentFontFamily()"
+                                        ValueChanged="@(fonts => UpdateFontFamily(fonts))"
+                                        Icon="@Icons.Material.Filled.FontDownload"
+                                        HelperText="Select one or more fonts (first available will be used)" />
+                </MudItem>
+                
+                <MudItem xs="12" md="6">
+                    <SliderWithLabel Label="Font Size"
+                                     Value="@GetFontSizeValue()"
+                                     ValueChanged="@(value => UpdateFontSize(value))"
+                                     Min="10"
+                                     Max="24"
+                                     Step="0.5"
+                                     DecimalPlaces="1"
+                                     Unit="px"
+                                     Icon="@Icons.Material.Filled.FormatSize"
+                                     HelperText="Base font size for body text" />
+                </MudItem>
+                
+                <MudItem xs="12" md="6">
+                    <MudSelect T="string" Label="Font Weight"
+                               Value="@GetTypographyValue("Default", "FontWeight")"
+                               ValueChanged="@(value => UpdateTypography("Default", "FontWeight", value))"
+                               Variant="Variant.Outlined">
+                        <MudSelectItem Value="@("100")">100 - Thin</MudSelectItem>
+                        <MudSelectItem Value="@("200")">200 - Extra Light</MudSelectItem>
+                        <MudSelectItem Value="@("300")">300 - Light</MudSelectItem>
+                        <MudSelectItem Value="@("400")">400 - Normal</MudSelectItem>
+                        <MudSelectItem Value="@("500")">500 - Medium</MudSelectItem>
+                        <MudSelectItem Value="@("600")">600 - Semi Bold</MudSelectItem>
+                        <MudSelectItem Value="@("700")">700 - Bold</MudSelectItem>
+                        <MudSelectItem Value="@("800")">800 - Extra Bold</MudSelectItem>
+                        <MudSelectItem Value="@("900")">900 - Black</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                
+                <MudItem xs="12" md="6">
+                    <SliderWithLabel Label="Line Height"
+                                     Value="@GetLineHeightValue()"
+                                     ValueChanged="@(value => UpdateLineHeight(value))"
+                                     Min="1.0"
+                                     Max="2.0"
+                                     Step="0.05"
+                                     DecimalPlaces="2"
+                                     Icon="@Icons.Material.Filled.FormatLineSpacing"
+                                     HelperText="Space between lines of text" />
+                </MudItem>
+                
+                <MudItem xs="12" md="6">
+                    <SliderWithLabel Label="Letter Spacing"
+                                     Value="@GetLetterSpacingValue()"
+                                     ValueChanged="@(value => UpdateLetterSpacing(value))"
+                                     Min="-0.05"
+                                     Max="0.3"
+                                     Step="0.01"
+                                     DecimalPlaces="3"
+                                     Unit="em"
+                                     Icon="@Icons.Material.Filled.SpaceBar"
+                                     HelperText="Space between characters" />
+                </MudItem>
+            </MudGrid>
+        </MudPaper>
+    </MudItem>
+    
+    <MudItem xs="12" lg="4">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.h6" Color="Color.Primary" Class="mb-4">
+                Typography Preview
+            </MudText>
+            
+            <MudStack Spacing="2">
+                <MudText Typo="Typo.h1">Heading 1</MudText>
+                <MudText Typo="Typo.h2">Heading 2</MudText>
+                <MudText Typo="Typo.h3">Heading 3</MudText>
+                <MudText Typo="Typo.h4">Heading 4</MudText>
+                <MudText Typo="Typo.h5">Heading 5</MudText>
+                <MudText Typo="Typo.h6">Heading 6</MudText>
+                <MudText Typo="Typo.subtitle1">Subtitle 1</MudText>
+                <MudText Typo="Typo.subtitle2">Subtitle 2</MudText>
+                <MudText Typo="Typo.body1">Body 1 - Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore.</MudText>
+                <MudText Typo="Typo.body2">Body 2 - Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</MudText>
+                <MudText Typo="Typo.caption">Caption - Small text for captions and labels</MudText>
+                <MudText Typo="Typo.overline">OVERLINE - ALL CAPS TEXT</MudText>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary">Button Text</MudButton>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+    
+    @foreach (var heading in HeadingTypes)
+    {
+        <MudItem xs="12" sm="6" md="4">
+            <MudPaper Class="pa-3" Elevation="1">
+                <MudText Typo="Typo.subtitle1" Color="Color.Primary" Class="mb-2">
+                    @heading
+                </MudText>
+                
+                <MudSelect T="string" Label="Font Weight"
+                           Value="@GetTypographyValue(heading, "FontWeight")"
+                           ValueChanged="@(value => UpdateTypography(heading, "FontWeight", value))"
+                           Variant="Variant.Outlined"
+                           Dense="true">
+                    <MudSelectItem Value="@("400")">400 - Normal</MudSelectItem>
+                    <MudSelectItem Value="@("500")">500 - Medium</MudSelectItem>
+                    <MudSelectItem Value="@("600")">600 - Semi Bold</MudSelectItem>
+                    <MudSelectItem Value="@("700")">700 - Bold</MudSelectItem>
+                </MudSelect>
+            </MudPaper>
+        </MudItem>
+    }
+    
+    <MudItem xs="12" sm="6">
+        <MudPaper Class="pa-3" Elevation="1">
+            <MudText Typo="Typo.subtitle1" Color="Color.Primary" Class="mb-2">
+                Button Typography
+            </MudText>
+            
+            <MudStack Spacing="2">
+                <MudSelect T="string" Label="Font Weight"
+                           Value="@GetTypographyValue("Button", "FontWeight")"
+                           ValueChanged="@(value => UpdateTypography("Button", "FontWeight", value))"
+                           Variant="Variant.Outlined"
+                           Dense="true">
+                    <MudSelectItem Value="@("400")">400 - Normal</MudSelectItem>
+                    <MudSelectItem Value="@("500")">500 - Medium</MudSelectItem>
+                    <MudSelectItem Value="@("600")">600 - Semi Bold</MudSelectItem>
+                    <MudSelectItem Value="@("700")">700 - Bold</MudSelectItem>
+                </MudSelect>
+                
+                <MudSelect T="string" Label="Text Transform"
+                           Value="@GetTypographyValue("Button", "TextTransform")"
+                           ValueChanged="@(value => UpdateTypography("Button", "TextTransform", value))"
+                           Variant="Variant.Outlined"
+                           Dense="true">
+                    <MudSelectItem Value="@("none")">None</MudSelectItem>
+                    <MudSelectItem Value="@("uppercase")">UPPERCASE</MudSelectItem>
+                    <MudSelectItem Value="@("lowercase")">lowercase</MudSelectItem>
+                    <MudSelectItem Value="@("capitalize")">Capitalize</MudSelectItem>
+                </MudSelect>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private readonly string[] HeadingTypes = { "H1", "H2", "H3", "H4", "H5", "H6", "Subtitle1", "Subtitle2" };
+
+    private string GetTypographyValue(string section, string propertyName)
+    {
+        try
+        {
+            var value = ThemeService.GetTypographyPropertyValue(ThemeState.Value.CurrentTheme, section, propertyName);
+            return value ?? "";
+        }
+        catch
+        {
+            return "";
+        }
+    }
+
+    private IEnumerable<string> GetCurrentFontFamily()
+    {
+        try
+        {
+            var typography = ThemeState.Value.CurrentTheme.Typography.Default;
+            return typography?.FontFamily ?? new[] { "Inter", "sans-serif" };
+        }
+        catch
+        {
+            return new[] { "Inter", "sans-serif" };
+        }
+    }
+
+    private double GetFontSizeValue()
+    {
+        try
+        {
+            var fontSize = GetTypographyValue("Default", "FontSize");
+            // Parse rem or px values
+            if (fontSize.EndsWith("rem"))
+            {
+                var value = fontSize.Replace("rem", "").Replace(".", ",");
+                return double.TryParse(value, out var result) ? result * 16 : 14; // Convert rem to px
+            }
+            if (fontSize.EndsWith("px"))
+            {
+                var value = fontSize.Replace("px", "");
+                return double.TryParse(value, out var result) ? result : 14;
+            }
+            return 14;
+        }
+        catch
+        {
+            return 14;
+        }
+    }
+
+    private double GetLineHeightValue()
+    {
+        try
+        {
+            var lineHeight = GetTypographyValue("Default", "LineHeight");
+            return double.TryParse(lineHeight, out var result) ? result : 1.43;
+        }
+        catch
+        {
+            return 1.43;
+        }
+    }
+
+    private double GetLetterSpacingValue()
+    {
+        try
+        {
+            var letterSpacing = GetTypographyValue("Default", "LetterSpacing");
+            if (letterSpacing.EndsWith("em"))
+            {
+                var value = letterSpacing.Replace("em", "").Replace(".", ",");
+                return double.TryParse(value, out var letterSpacingValue) ? letterSpacingValue : 0.01071;
+            }
+            return double.TryParse(letterSpacing, out var spacingValue) ? spacingValue : 0.01071;
+        }
+        catch
+        {
+            return 0.01071;
+        }
+    }
+
+    private void UpdateFontFamily(IEnumerable<string> fonts)
+    {
+        var theme = ThemeService.CloneTheme(ThemeState.Value.CurrentTheme);
+        theme.Typography.Default.FontFamily = fonts.ToArray();
+        Dispatcher.Dispatch(new UpdateThemeAction(theme));
+    }
+
+    private void UpdateFontSize(double value)
+    {
+        var theme = ThemeService.CloneTheme(ThemeState.Value.CurrentTheme);
+        theme.Typography.Default.FontSize = $"{value}px";
+        Dispatcher.Dispatch(new UpdateThemeAction(theme));
+    }
+
+    private void UpdateLineHeight(double value)
+    {
+        var theme = ThemeService.CloneTheme(ThemeState.Value.CurrentTheme);
+        theme.Typography.Default.LineHeight = value.ToString("F2");
+        Dispatcher.Dispatch(new UpdateThemeAction(theme));
+    }
+
+    private void UpdateLetterSpacing(double value)
+    {
+        var theme = ThemeService.CloneTheme(ThemeState.Value.CurrentTheme);
+        theme.Typography.Default.LetterSpacing = $"{value:F5}em";
+        Dispatcher.Dispatch(new UpdateThemeAction(theme));
+    }
+    
+    private void UpdateTypography(string section, string propertyName, string value)
+    {
+        var currentValue = ThemeService.GetTypographyPropertyValue(ThemeState.Value.CurrentTheme, section, propertyName);
+        if (currentValue?.Equals(value, StringComparison.OrdinalIgnoreCase) == true)
+            return;
+
+        var theme = ThemeService.CloneTheme(ThemeState.Value.CurrentTheme);
+        ThemeService.UpdateTypographyProperty(theme, section, propertyName, value);
+        Dispatcher.Dispatch(new UpdateThemeAction(theme));
+    }
+}
