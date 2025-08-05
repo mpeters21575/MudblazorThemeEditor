@@ -22,17 +22,28 @@ jobs:
       with:
         dotnet-version: ${{ matrix.dotnet-version }}
 
+    - name: Find solution file
+      id: find-sln
+      run: |
+        SLN_FILE=$(find . -name "*.sln" | head -1)
+        if [ -z "$SLN_FILE" ]; then
+          CSPROJ_FILE=$(find . -name "*.csproj" | head -1)
+          echo "project_file=$CSPROJ_FILE" >> $GITHUB_OUTPUT
+        else
+          echo "project_file=$SLN_FILE" >> $GITHUB_OUTPUT
+        fi
+
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore "${{ steps.find-sln.outputs.project_file }}"
 
     - name: Build
-      run: dotnet build --no-restore --configuration Release
+      run: dotnet build "${{ steps.find-sln.outputs.project_file }}" --no-restore --configuration Release
 
     - name: Test
-      run: dotnet test --no-build --configuration Release --verbosity normal
+      run: dotnet test "${{ steps.find-sln.outputs.project_file }}" --no-build --configuration Release --verbosity normal
 
     - name: Publish
-      run: dotnet publish --no-build --configuration Release --output ./publish
+      run: dotnet publish "${{ steps.find-sln.outputs.project_file }}" --no-build --configuration Release --output ./publish
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
@@ -52,8 +63,19 @@ jobs:
       with:
         dotnet-version: '9.0.x'
 
+    - name: Find solution file
+      id: find-sln
+      run: |
+        SLN_FILE=$(find . -name "*.sln" | head -1)
+        if [ -z "$SLN_FILE" ]; then
+          CSPROJ_FILE=$(find . -name "*.csproj" | head -1)
+          echo "project_file=$CSPROJ_FILE" >> $GITHUB_OUTPUT
+        else
+          echo "project_file=$SLN_FILE" >> $GITHUB_OUTPUT
+        fi
+
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore "${{ steps.find-sln.outputs.project_file }}"
 
     - name: Run code analysis
-      run: dotnet build --configuration Release --verbosity normal
+      run: dotnet build "${{ steps.find-sln.outputs.project_file }}" --configuration Release --verbosity normal
